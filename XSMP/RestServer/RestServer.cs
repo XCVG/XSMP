@@ -53,6 +53,9 @@ namespace XSMP.RestServer
 
                 try
                 {
+                    if (context.Request.ContentType == "application/coffee-pot-command")
+                        throw new TeapotException();
+
                     string result = CallAPI(context.Request);
                     Console.WriteLine(result);
                     response.StatusCode = (int)HttpStatusCode.OK;
@@ -60,10 +63,10 @@ namespace XSMP.RestServer
                 }
                 catch(Exception e)
                 {
-                    //TODO we will have more specific exception types
-                    string result = JsonConvert.SerializeObject(new Error((int)HttpStatusCode.InternalServerError, "API", e.GetType().Name, e.Message));
+                    int statusCode = GetStatusCodeForError(e);
+                    string result = JsonConvert.SerializeObject(new Error(statusCode, "API", e.GetType().Name, e.Message));
                     Console.WriteLine(result);
-                    response.StatusCode = (int)HttpStatusCode.InternalServerError;
+                    response.StatusCode = statusCode;
                     WriteResponse(response, result);
                 }
                 
@@ -72,8 +75,29 @@ namespace XSMP.RestServer
 
         private string CallAPI(HttpListenerRequest request) //TODO may make this async
         {
+            
+
             //TODO decode url and call
             throw new NotImplementedException();
+        }
+
+        /// <summary>
+        /// Gets the corresponding status code for an exception
+        /// </summary>
+        private int GetStatusCodeForError(Exception e)
+        {
+            switch(e)
+            {
+                //TODO implement 403, 404, 410 etc
+                case NotImplementedException _:
+                    return (int)HttpStatusCode.NotImplemented;
+                case TeapotException _:
+                    return 418;
+                case TimeoutException _:
+                    return 524;
+                default:
+                    return (int)HttpStatusCode.InternalServerError;
+            }
         }
 
         private void WriteResponse(HttpListenerResponse response, string content)

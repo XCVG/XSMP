@@ -10,7 +10,10 @@ namespace XSMP
 
         static void Main(string[] args)
         {
+            Console.WriteLine("Starting XCVG Systems Media Provider v0.1 \"Alissa\"");
+
             RESTServer restServer = new RESTServer();
+            Console.WriteLine("REST server started!");
 
             IsRunning = true;
 
@@ -18,6 +21,8 @@ namespace XSMP
             {
                 Thread.Sleep(10);
             }
+
+            Console.WriteLine("Ending XSMP");
 
             restServer.Dispose();
         }
