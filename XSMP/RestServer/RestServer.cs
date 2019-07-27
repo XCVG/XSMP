@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Net;
 using System.Text;
 using System.Threading;
+using Newtonsoft.Json;
 
 namespace XSMP.RestServer
 {
@@ -42,13 +43,37 @@ namespace XSMP.RestServer
             while(IsListening)
             {
                 var context = Listener.GetContext();
+
+                //TODO asyncish stuff- I think after this point we're safe
+
                 Console.WriteLine(context.Request.Url);
 
                 var response = context.Response;
-                response.StatusCode = (int)HttpStatusCode.OK;
+                response.ContentType = "application/json";
 
-                WriteResponse(response, "Hello World!");
+                try
+                {
+                    string result = CallAPI(context.Request);
+                    Console.WriteLine(result);
+                    response.StatusCode = (int)HttpStatusCode.OK;
+                    WriteResponse(response, result);
+                }
+                catch(Exception e)
+                {
+                    //TODO we will have more specific exception types
+                    string result = JsonConvert.SerializeObject(new Error((int)HttpStatusCode.InternalServerError, "API", e.GetType().Name, e.Message));
+                    Console.WriteLine(result);
+                    response.StatusCode = (int)HttpStatusCode.InternalServerError;
+                    WriteResponse(response, result);
+                }
+                
             }
+        }
+
+        private string CallAPI(HttpListenerRequest request) //TODO may make this async
+        {
+            //TODO decode url and call
+            throw new NotImplementedException();
         }
 
         private void WriteResponse(HttpListenerResponse response, string content)
