@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Threading;
+using XSMP.ApiSurface;
 using XSMP.RestServer;
 
 namespace XSMP
@@ -12,7 +13,8 @@ namespace XSMP
         {
             Console.WriteLine("Starting XCVG Systems Media Provider v0.1 \"Alissa\"");
 
-            RESTServer restServer = new RESTServer();
+            APISurface apiSurface = new APISurface();
+            RESTServer restServer = new RESTServer(apiSurface);
             Console.WriteLine("REST server started!");
 
             IsRunning = true;
@@ -20,11 +22,13 @@ namespace XSMP
             while(IsRunning)
             {
                 Thread.Sleep(10);
+                //TODO poll components?
             }
 
             Console.WriteLine("Ending XSMP");
 
             restServer.Dispose();
+            apiSurface.Dispose();
         }
 
         public static void SignalExit()

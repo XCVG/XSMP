@@ -3,22 +3,26 @@ using System.Collections.Generic;
 using System.Net;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 using Newtonsoft.Json;
+using XSMP.ApiSurface;
 
 namespace XSMP.RestServer
 {
     public class RESTServer : IDisposable
     {
-
+        private APISurface Api;
         private HttpListener Listener;
         private Thread ListenerThread;
 
         private bool IsListening;
 
-        public RESTServer()
+        public RESTServer(APISurface apiSurface)
         {
+            Api = apiSurface;
+
             Listener = new HttpListener();
-            Listener.Prefixes.Add(@"http://localhost:1547/");
+            Listener.Prefixes.Add(Config.UrlPrefix);
             Listener.Start();
 
             IsListening = true;
@@ -46,39 +50,37 @@ namespace XSMP.RestServer
 
                 //TODO asyncish stuff- I think after this point we're safe
 
-                Console.WriteLine(context.Request.Url);
+                //we're essentially firing off an async task now
+                Task.Run(() => HandleRequestAsync(context));
 
-                var response = context.Response;
-                response.ContentType = "application/json";
-
-                try
-                {
-                    if (context.Request.ContentType == "application/coffee-pot-command")
-                        throw new TeapotException();
-
-                    string result = CallAPI(context.Request);
-                    Console.WriteLine(result);
-                    response.StatusCode = (int)HttpStatusCode.OK;
-                    WriteResponse(response, result);
-                }
-                catch(Exception e)
-                {
-                    int statusCode = GetStatusCodeForError(e);
-                    string result = JsonConvert.SerializeObject(new Error(statusCode, "API", e.GetType().Name, e.Message));
-                    Console.WriteLine(result);
-                    response.StatusCode = statusCode;
-                    WriteResponse(response, result);
-                }
-                
             }
         }
 
-        private string CallAPI(HttpListenerRequest request) //TODO may make this async
+        /// <summary>
+        /// Handles a request async
+        /// </summary>
+        private async Task HandleRequestAsync(HttpListenerContext context)
         {
-            
+            Console.WriteLine(context.Request.Url);
 
-            //TODO decode url and call
-            throw new NotImplementedException();
+            var response = context.Response;
+            response.ContentType = "application/json";
+
+            try
+            {
+                string result = await Api.Call(context.Request);
+                Console.WriteLine(result);
+                response.StatusCode = (int)HttpStatusCode.OK;
+                WriteResponse(response, result);
+            }
+            catch (Exception e)
+            {
+                int statusCode = GetStatusCodeForError(e);
+                string result = JsonConvert.SerializeObject(new Error(statusCode, "API", e.GetType().Name, e.Message));
+                Console.WriteLine(result);
+                response.StatusCode = statusCode;
+                WriteResponse(response, result);
+            }
         }
 
         /// <summary>

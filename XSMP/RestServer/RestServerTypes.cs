@@ -28,8 +28,5 @@ namespace XSMP.RestServer
         }
     }
 
-    internal class TeapotException : Exception
-    {
 
-    }
 }
