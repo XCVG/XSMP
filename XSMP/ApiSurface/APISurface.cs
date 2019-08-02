@@ -31,7 +31,7 @@ namespace XSMP.ApiSurface
         private void PrepareMappings()
         {
             var methods = Assembly.GetExecutingAssembly().GetTypes()
-                .Select(t => t.GetMethods()).SelectMany(i => i)
+                .Select(t => t.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static)).SelectMany(i => i)
                 .Where(t => t.GetCustomAttribute<APIMethodAttribute>() != null);
 
             Mappings = new List<APIMapping>();
@@ -42,6 +42,8 @@ namespace XSMP.ApiSurface
                 var mapping = new APIMapping(attr.Mapping, attr.Verb, method);
                 Mappings.Add(mapping);
             }
+
+            //TODO optimization by presort
         }
 
         public void Dispose()
@@ -51,27 +53,116 @@ namespace XSMP.ApiSurface
 
         public async Task<string> Call(HttpListenerRequest request)
         {
+            //basically the world's shittiest front controller
+
             //reject certain things out of hand
             if (request.ContentType == "application/coffee-pot-command")
                 throw new TeapotException();
 
-            //TODO split strings, find matching method, and call
+            //split strings, find matching method, and call
+            string[] urlSegments = request.RawUrl.Trim().Split('/', StringSplitOptions.RemoveEmptyEntries); //that will probably bite me later
+
+            //discard the first segment
+            urlSegments = urlSegments.Skip(1).ToArray();
+            int numSegments = urlSegments.Length;
+
+            //match segments to stored methods
+            Dictionary<APIMapping, int> matchedMappings = new Dictionary<APIMapping, int>();
+            foreach(var potentialMapping in Mappings)
+            {
+                //TODO check verbs lol
+
+                int matchedSegments = 0;
+
+                if (potentialMapping.Segments.Length < numSegments && potentialMapping.UseWildcard)
+                {
+                    //potentialMapping has less segments than urlSegments and is wildcard -> must match up to potentialMapping.segments
+                    if (Enumerable.SequenceEqual<string>(potentialMapping.Segments, urlSegments.Take(potentialMapping.Segments.Length), StringComparer.OrdinalIgnoreCase))
+                        matchedSegments = potentialMapping.Segments.Length;
+                    
+                }
+                else if (potentialMapping.Segments.Length == numSegments && !potentialMapping.UseWildcard)
+                {
+                    //potentialMapping has same number of segments as urlSegments -> all must match
+                    if (Enumerable.SequenceEqual<string>(potentialMapping.Segments, urlSegments, StringComparer.OrdinalIgnoreCase))
+                        matchedSegments = potentialMapping.Segments.Length;
+                }
+
+                if(matchedSegments > 0)
+                {
+                    matchedMappings.Add(potentialMapping, matchedSegments);
+                }
+            }
+
+            APIMapping mapping = default;
+
+            //we can short-circuit two easy cases
+            if(matchedMappings.Count == 0)
+            {
+                throw new NotImplementedException();
+            }
+            else if(matchedMappings.Count == 1)
+            {
+                mapping = matchedMappings.First().Key;                
+            }
+            else
+            {
+                //use the best match
+                var sortedMappings = matchedMappings.OrderByDescending(kvp => kvp.Value);
+                mapping = sortedMappings.First().Key;
+            }
+
+            //get segment and body
+            string segment = mapping.Segments.Length < numSegments ? string.Join('/', urlSegments.Skip(mapping.Segments.Length)) : string.Empty;
+            string body = request.GetBody();
+
+            //call method
+            APIRequest apiRequest = new APIRequest(request.RawUrl, segment, body);
+
+            if (typeof(Task<string>).IsAssignableFrom(mapping.Method.ReturnType))
+            {
+                return await (Task<string>)mapping.Method.Invoke(this, new object[] { apiRequest });
+            }
+            else
+            {
+                return (string)mapping.Method.Invoke(this, new object[] { apiRequest });
+            }
+
 
             throw new NotImplementedException();
         }
         
-
         private readonly struct APIMapping
         {
             public readonly string Mapping;
             public readonly HttpVerb Verb;
             public readonly MethodInfo Method;
 
+            public readonly string[] Segments;
+            public readonly bool UseWildcard;
+
             public APIMapping(string mapping, HttpVerb verb, MethodInfo method)
             {
                 Mapping = mapping;
                 Verb = verb;
                 Method = method;
+
+                Segments = mapping.Split('/');
+                UseWildcard = mapping.EndsWith('/');
+            }
+        }
+
+        private readonly struct APIRequest
+        {
+            public readonly string Url;
+            public readonly string Segment;
+            public readonly string Body;
+
+            public APIRequest(string url, string segment, string body)
+            {
+                Url = url;
+                Segment = segment;
+                Body = body;
             }
         }
 
@@ -80,7 +171,7 @@ namespace XSMP.ApiSurface
         #region API
 
         [APIMethod(Mapping = "meta/status", Verb = HttpVerb.GET)]
-        public string GetSystemStatus(string requestSegment, string requestBody)
+        private string GetSystemStatus(APIRequest request)
         {
             return JsonConvert.SerializeObject(new { status = "WIP", description = "It's not done yet" });
         }

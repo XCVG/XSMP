@@ -13,5 +13,7 @@ namespace XSMP
         public static int Port { get; } = 1547;
         public static string UrlPrefix => $"http://{Hostname}:{Port}/";
 
+        public static int APIVersion { get; } = 1;
+
     }
 }
