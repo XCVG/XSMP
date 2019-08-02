@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -59,6 +60,8 @@ namespace XSMP.ApiSurface
             if (request.ContentType == "application/coffee-pot-command")
                 throw new TeapotException();
 
+            string requestVerb = request.HttpMethod;
+
             //split strings, find matching method, and call
             string[] urlSegments = request.RawUrl.Trim().Split('/', StringSplitOptions.RemoveEmptyEntries); //that will probably bite me later
 
@@ -70,7 +73,9 @@ namespace XSMP.ApiSurface
             Dictionary<APIMapping, int> matchedMappings = new Dictionary<APIMapping, int>();
             foreach(var potentialMapping in Mappings)
             {
-                //TODO check verbs lol
+                //check verbs lol
+                if (!string.Equals(potentialMapping.Verb.ToString(), requestVerb, StringComparison.OrdinalIgnoreCase))
+                    continue;
 
                 int matchedSegments = 0;
 
