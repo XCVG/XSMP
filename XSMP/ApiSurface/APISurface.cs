@@ -31,8 +31,7 @@ namespace XSMP.ApiSurface
         /// </summary>
         private void PrepareMappings()
         {
-            var methods = Assembly.GetExecutingAssembly().GetTypes()
-                .Select(t => t.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static)).SelectMany(i => i)
+            var methods = GetType().GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static)
                 .Where(t => t.GetCustomAttribute<APIMethodAttribute>() != null);
 
             Mappings = new List<APIMapping>();
@@ -54,6 +53,8 @@ namespace XSMP.ApiSurface
 
         public async Task<string> Call(HttpListenerRequest request)
         {
+            //TODO fix wildcards, they're not working
+
             //basically the world's shittiest front controller
 
             //reject certain things out of hand
@@ -152,7 +153,7 @@ namespace XSMP.ApiSurface
                 Verb = verb;
                 Method = method;
 
-                Segments = mapping.Split('/');
+                Segments = mapping.Split('/', StringSplitOptions.RemoveEmptyEntries);
                 UseWildcard = mapping.EndsWith('/');
             }
         }
@@ -179,6 +180,24 @@ namespace XSMP.ApiSurface
         private string GetSystemStatus(APIRequest request)
         {
             return JsonConvert.SerializeObject(new { status = "WIP", description = "It's not done yet" });
+        }
+
+        [APIMethod(Mapping = "meta/status", Verb = HttpVerb.POST)]
+        private string PostSystemStatus(APIRequest request)
+        {
+            return JsonConvert.SerializeObject(new { status = "test", description = "Why would you ever POST status?" });
+        }
+
+        [APIMethod(Mapping = "meta/status/", Verb = HttpVerb.GET)]
+        private string GetAnyStatus(APIRequest request)
+        {
+            return JsonConvert.SerializeObject(new { status = "test", description = "Hit \"any status\"", segment = request.Segment });
+        }
+
+        [APIMethod(Mapping = "meta/", Verb = HttpVerb.GET)]
+        private string GetAnyMeta(APIRequest request)
+        {
+            return JsonConvert.SerializeObject(new { status = "test", description = "You hit the base meta handler", segment = request.Segment });
         }
 
         #endregion
