@@ -11,7 +11,9 @@ namespace XSMP
 
         static void Main(string[] args)
         {
-            Console.WriteLine("Starting XCVG Systems Media Provider v0.1 \"Alissa\"");
+            Console.WriteLine("Starting XCVG Systems Media Provider v0.1 \"Anette\"");
+
+            AppDomain.CurrentDomain.ProcessExit += new EventHandler(HandleExternalExit);
 
             APISurface apiSurface = new APISurface();
             RESTServer restServer = new RESTServer(apiSurface);
@@ -33,6 +35,14 @@ namespace XSMP
 
         public static void SignalExit()
         {
+            IsRunning = false;
+        }
+
+        //I don't think this works at all, but we tried
+        private static void HandleExternalExit(object sender, EventArgs e)
+        {
+            Console.WriteLine("Exit signal received!");
+
             IsRunning = false;
         }
     }

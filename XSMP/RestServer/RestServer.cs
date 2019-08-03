@@ -13,9 +13,6 @@ namespace XSMP.RestServer
     {
         private APISurface Api;
         private HttpListener Listener;
-        private Thread ListenerThread;
-
-        private bool IsListening;
 
         public RESTServer(APISurface apiSurface)
         {
@@ -25,36 +22,28 @@ namespace XSMP.RestServer
             Listener.Prefixes.Add(Config.UrlPrefix);
             Listener.Start();
 
-            IsListening = true;
-
-            ListenerThread = new Thread(HandleRequests);
-            ListenerThread.Start();            
+            Listener.BeginGetContext(new AsyncCallback(HandleRequestCallback), Listener);        
         }
 
         public void Dispose()
         {
-            Listener.Stop();
-
-            //stupid but okay for now
-            IsListening = false;
-            Thread.Sleep(10);
-            if(ListenerThread.IsAlive)
-                ListenerThread.Abort();
+            Listener.Stop(); //probably okay
         }
 
-        private void HandleRequests()
+        /// <summary>
+        /// Handles an async request and fires off a Task
+        /// </summary>
+        private void HandleRequestCallback(IAsyncResult asyncResult)
         {
-            while(IsListening)
-            {
-                var context = Listener.GetContext();
+            HttpListener listener = (HttpListener)asyncResult.AsyncState;
+            HttpListenerContext context = Listener.EndGetContext(asyncResult);
 
-                //TODO asyncish stuff- I think after this point we're safe
+            Task.Run(() => HandleRequestAsync(context));
 
-                //we're essentially firing off an async task now
-                Task.Run(() => HandleRequestAsync(context));
-
-            }
+            //setup the next one
+            listener.BeginGetContext(new AsyncCallback(HandleRequestCallback), listener);
         }
+
 
         /// <summary>
         /// Handles a request async
@@ -71,7 +60,7 @@ namespace XSMP.RestServer
                 string result = await Api.Call(context.Request);
                 Console.WriteLine(result);
                 response.StatusCode = (int)HttpStatusCode.OK;
-                WriteResponse(response, result);
+                response.WriteResponse(result);
             }
             catch (Exception e)
             {
@@ -79,7 +68,7 @@ namespace XSMP.RestServer
                 string result = JsonConvert.SerializeObject(new Error(statusCode, "API", e.GetType().Name, e.Message));
                 Console.WriteLine(result);
                 response.StatusCode = statusCode;
-                WriteResponse(response, result);
+                response.WriteResponse(result);
             }
         }
 
@@ -100,15 +89,6 @@ namespace XSMP.RestServer
                 default:
                     return (int)HttpStatusCode.InternalServerError;
             }
-        }
-
-        private void WriteResponse(HttpListenerResponse response, string content)
-        {
-            byte[] buffer = Encoding.UTF8.GetBytes(content);
-            response.ContentLength64 = buffer.Length;
-            var stream = response.OutputStream;
-            stream.Write(buffer, 0, buffer.Length);
-            stream.Close();
         }
 
     }

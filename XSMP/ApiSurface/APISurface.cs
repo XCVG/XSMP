@@ -176,6 +176,13 @@ namespace XSMP.ApiSurface
 
         #region API
 
+        [APIMethod(Mapping = "meta/exit", Verb = HttpVerb.POST)]
+        private string PostExitRequest(APIRequest request)
+        {
+            Program.SignalExit();
+            return JsonConvert.SerializeObject(new { status = "ending", description = "Shutting down XSMP" });
+        }
+
         [APIMethod(Mapping = "meta/status", Verb = HttpVerb.GET)]
         private string GetSystemStatus(APIRequest request)
         {
@@ -198,6 +205,20 @@ namespace XSMP.ApiSurface
         private string GetAnyMeta(APIRequest request)
         {
             return JsonConvert.SerializeObject(new { status = "test", description = "You hit the base meta handler", segment = request.Segment });
+        }
+
+        [APIMethod(Mapping = "meta/async", Verb = HttpVerb.GET)]
+        private async Task<string> GetAsync(APIRequest request)
+        {
+            await Task.Delay(2000);
+
+            return JsonConvert.SerializeObject(new { status = "test", description = "Hit \"async\""});
+        }
+
+        [APIMethod(Mapping = "meta/static", Verb = HttpVerb.GET)]
+        private static string GetStatic(APIRequest request)
+        {
+            return JsonConvert.SerializeObject(new { status = "test", description = "Hit \"static\"" });
         }
 
         #endregion
