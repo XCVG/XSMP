@@ -22,6 +22,7 @@ namespace XSMP.RestServer
             Listener.Prefixes.Add(Config.UrlPrefix);
             Listener.Start();
 
+            //I found out there was a native TPL version immediately after writing this
             Listener.BeginGetContext(new AsyncCallback(HandleRequestCallback), Listener);        
         }
 

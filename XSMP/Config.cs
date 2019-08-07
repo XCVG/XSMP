@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Text;
 
 namespace XSMP
@@ -14,6 +15,14 @@ namespace XSMP
         public static string UrlPrefix => $"http://{Hostname}:{Port}/";
 
         public static int APIVersion { get; } = 1;
+
+        public static string CompanyFolder { get; } = "XCVG Systems";
+
+        public static string DataFolderPath => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), CompanyFolder, "XSMP", "v" + APIVersion.ToString());
+
+        public static string CacheFolderPath => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), CompanyFolder, "MediaCache");
+
+        public static string UserConfigPath => Path.Combine(DataFolderPath, "config.json");
 
     }
 }
