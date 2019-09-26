@@ -58,10 +58,10 @@ namespace XSMP.RestServer
 
             try
             {
-                string result = await Api.Call(context.Request);
+                APIResponse result = await Api.Call(context.Request);
                 Console.WriteLine(result);
-                response.StatusCode = (int)HttpStatusCode.OK;
-                response.WriteResponse(result);
+                response.StatusCode = result.StatusCode;
+                response.WriteResponse(result.Body);
             }
             catch (Exception e)
             {

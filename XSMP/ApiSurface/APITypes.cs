@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Net;
 using System.Net.Http;
 using System.Text;
 
@@ -38,6 +39,23 @@ namespace XSMP.ApiSurface
 
     public readonly struct APIResponse
     {
-        //TODO
+        public readonly string Body;
+        public readonly int StatusCode;
+
+        public APIResponse(string body) : this(body, (int)HttpStatusCode.OK)
+        {
+
+        }
+
+        public APIResponse(string body, int statusCode)
+        {
+            StatusCode = statusCode;
+            Body = body;
+        }
+
+        public override string ToString()
+        {
+            return $"{Body}\n({StatusCode})";
+        }
     }
 }

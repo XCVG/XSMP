@@ -50,7 +50,7 @@ namespace XSMP.ApiSurface
             //nop for now
         }
 
-        public async Task<string> Call(HttpListenerRequest request)
+        public async Task<APIResponse> Call(HttpListenerRequest request)
         {
             //basically the world's shittiest front controller
 
@@ -122,13 +122,13 @@ namespace XSMP.ApiSurface
             //call method
             APIRequest apiRequest = new APIRequest(request.RawUrl, segment, body);
 
-            if (typeof(Task<string>).IsAssignableFrom(mapping.Method.ReturnType))
+            if (typeof(Task<APIResponse>).IsAssignableFrom(mapping.Method.ReturnType))
             {
-                return await (Task<string>)mapping.Method.Invoke(ApiSurface, new object[] { apiRequest });
+                return await (Task<APIResponse>)mapping.Method.Invoke(ApiSurface, new object[] { apiRequest });
             }
             else
             {
-                return (string)mapping.Method.Invoke(ApiSurface, new object[] { apiRequest });
+                return (APIResponse)mapping.Method.Invoke(ApiSurface, new object[] { apiRequest });
             }
 
 

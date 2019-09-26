@@ -25,48 +25,48 @@ namespace XSMP.ApiSurface
         }
 
         [APIMethod(Mapping = "meta/exit", Verb = HttpVerb.POST)]
-        private string PostExitRequest(APIRequest request)
+        private APIResponse PostExitRequest(APIRequest request)
         {
             Program.SignalExit();
-            return JsonConvert.SerializeObject(new { status = "ending", description = "Shutting down XSMP" });
+            return new APIResponse(JsonConvert.SerializeObject(new { status = "ending", description = "Shutting down XSMP" }));
         }
 
         [APIMethod(Mapping = "meta/status", Verb = HttpVerb.GET)]
-        private string GetSystemStatus(APIRequest request)
+        private APIResponse GetSystemStatus(APIRequest request)
         {
-            return JsonConvert.SerializeObject(new { status = "WIP", description = "It's not done yet" });
+            return new APIResponse(JsonConvert.SerializeObject(new { status = "WIP", description = "It's not done yet" }));
         }
 
         [APIMethod(Mapping = "meta/status", Verb = HttpVerb.POST)]
-        private string PostSystemStatus(APIRequest request)
+        private APIResponse PostSystemStatus(APIRequest request)
         {
-            return JsonConvert.SerializeObject(new { status = "test", description = "Why would you ever POST status?" });
+            return new APIResponse(JsonConvert.SerializeObject(new { status = "test", description = "Why would you ever POST status?" }));
         }
 
         [APIMethod(Mapping = "meta/status/", Verb = HttpVerb.GET)]
-        private string GetAnyStatus(APIRequest request)
+        private APIResponse GetAnyStatus(APIRequest request)
         {
-            return JsonConvert.SerializeObject(new { status = "test", description = "Hit \"any status\"", segment = request.Segment });
+            return new APIResponse(JsonConvert.SerializeObject(new { status = "test", description = "Hit \"any status\"", segment = request.Segment }));
         }
 
         [APIMethod(Mapping = "meta/", Verb = HttpVerb.GET)]
-        private string GetAnyMeta(APIRequest request)
+        private APIResponse GetAnyMeta(APIRequest request)
         {
-            return JsonConvert.SerializeObject(new { status = "test", description = "You hit the base meta handler", segment = request.Segment });
+            return new APIResponse(JsonConvert.SerializeObject(new { status = "test", description = "You hit the base meta handler", segment = request.Segment }));
         }
 
         [APIMethod(Mapping = "meta/async", Verb = HttpVerb.GET)]
-        private async Task<string> GetAsync(APIRequest request)
+        private async Task<APIResponse> GetAsync(APIRequest request)
         {
             await Task.Delay(2000);
 
-            return JsonConvert.SerializeObject(new { status = "test", description = "Hit \"async\""});
+            return new APIResponse(JsonConvert.SerializeObject(new { status = "test", description = "Hit \"async\""}));
         }
 
         [APIMethod(Mapping = "meta/static", Verb = HttpVerb.GET)]
-        private static string GetStatic(APIRequest request)
+        private static APIResponse GetStatic(APIRequest request)
         {
-            return JsonConvert.SerializeObject(new { status = "test", description = "Hit \"static\"" });
+            return new APIResponse(JsonConvert.SerializeObject(new { status = "test", description = "Hit \"static\"" }));
         }
 
     }
