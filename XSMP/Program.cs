@@ -18,9 +18,9 @@ namespace XSMP
 
             SetupFolders();
             LoadUserConfig();
-
-            APISurface apiSurface = new APISurface();
-            RESTServer restServer = new RESTServer(apiSurface);
+            
+            APIController apiController = new APIController(new APISurface());
+            RESTServer restServer = new RESTServer(apiController);
             Console.WriteLine("REST server started!");
 
             IsRunning = true;
@@ -34,7 +34,6 @@ namespace XSMP
             Console.WriteLine("Ending XSMP");
 
             restServer.Dispose();
-            apiSurface.Dispose();
         }
 
         public static void SignalExit()

@@ -11,12 +11,12 @@ namespace XSMP.RestServer
 {
     public class RESTServer : IDisposable
     {
-        private APISurface Api;
+        private APIController Api;
         private HttpListener Listener;
 
-        public RESTServer(APISurface apiSurface)
+        public RESTServer(APIController apiController)
         {
-            Api = apiSurface;
+            Api = apiController;
 
             Listener = new HttpListener();
             Listener.Prefixes.Add(Config.UrlPrefix);

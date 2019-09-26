@@ -21,4 +21,23 @@ namespace XSMP.ApiSurface
     {
         GET, POST, PUT, DELETE
     }
+
+    public readonly struct APIRequest
+    {
+        public readonly string Url;
+        public readonly string Segment;
+        public readonly string Body;
+
+        public APIRequest(string url, string segment, string body)
+        {
+            Url = url;
+            Segment = segment;
+            Body = body;
+        }
+    }
+
+    public readonly struct APIResponse
+    {
+        //TODO
+    }
 }
