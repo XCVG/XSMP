@@ -32,25 +32,25 @@ namespace XSMP.ApiSurface
             //for now we only check the MediaDatabase component
             SystemStatus systemStatus;
             string systemStatusDescription;
-            switch (MediaDatabase.Status)
+            switch (MediaDatabase.State)
             {
-                case MediaDBStatus.Unknown:
+                case MediaDBState.Unknown:
                     systemStatus = SystemStatus.notReady;
                     systemStatusDescription = "Media database is in unknown state";
                     break;
-                case MediaDBStatus.Loading:
+                case MediaDBState.Loading:
                     systemStatus = SystemStatus.notReady;
                     systemStatusDescription = "Media database is loading";
                     break;
-                case MediaDBStatus.Scanning:
+                case MediaDBState.Scanning:
                     systemStatus = SystemStatus.notReady;
                     systemStatusDescription = "Media database is scanning";
                     break;
-                case MediaDBStatus.Ready:
+                case MediaDBState.Ready:
                     systemStatus = SystemStatus.ready;
                     systemStatusDescription = "Ready";
                     break;
-                case MediaDBStatus.Error:
+                case MediaDBState.Error:
                     systemStatus = SystemStatus.error;
                     systemStatusDescription = "Media database is in fault state";
                     break;
