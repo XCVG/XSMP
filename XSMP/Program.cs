@@ -94,5 +94,7 @@ namespace XSMP
         }
 
         public static string ProductNameString => $"{Config.ProductName} v{Config.ProductVersion} \"{Config.VersionCodename}\" (API v{Config.APIVersion})";
+
+        public static string ProgramFolderPath => Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().Location);
     }
 }
