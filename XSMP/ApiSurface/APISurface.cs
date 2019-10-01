@@ -8,6 +8,7 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
+using XSMP.MediaDatabase;
 
 namespace XSMP.ApiSurface
 {
@@ -17,25 +18,57 @@ namespace XSMP.ApiSurface
     /// </summary>
     public class APISurface
     {
+        private MediaDB MediaDatabase;
 
-        //TODO constructor with pseudo-DI
-        public APISurface()
+        //WIP constructor with pseudo-DI
+        public APISurface(MediaDB mediaDatabase)
         {
-            
+            MediaDatabase = mediaDatabase;
         }
 
         [APIMethod(Mapping = "meta/exit", Verb = HttpVerb.POST)]
         private APIResponse PostExitRequest(APIRequest request)
         {
             Program.SignalExit();
-            return new APIResponse(JsonConvert.SerializeObject(new { status = "ending", description = "Shutting down XSMP" }));
+            return new APIResponse(JsonConvert.SerializeObject(new { description = "Shutting down XSMP" }));
         }
 
         [APIMethod(Mapping = "meta/status", Verb = HttpVerb.GET)]
         private APIResponse GetSystemStatus(APIRequest request)
         {
-            return new APIResponse(JsonConvert.SerializeObject(new { status = "WIP", description = "It's not done yet" }));
+            //for now we only check the MediaDatabase component
+            SystemStatus systemStatus;
+            string systemStatusDescription;
+            switch (MediaDatabase.Status)
+            {
+                case MediaDBStatus.Unknown:
+                    systemStatus = SystemStatus.NotReady;
+                    systemStatusDescription = "Media database is in unknown state";
+                    break;
+                case MediaDBStatus.Loading:
+                    systemStatus = SystemStatus.NotReady;
+                    systemStatusDescription = "Media database is loading";
+                    break;
+                case MediaDBStatus.Scanning:
+                    systemStatus = SystemStatus.NotReady;
+                    systemStatusDescription = "Media database is scanning";
+                    break;
+                case MediaDBStatus.Ready:
+                    systemStatus = SystemStatus.Ready;
+                    systemStatusDescription = "Ready";
+                    break;
+                case MediaDBStatus.Error:
+                    systemStatus = SystemStatus.Error;
+                    systemStatusDescription = "Media database is in fault state";
+                    break;
+                default:
+                    throw new NotSupportedException();
+            }
+
+            return new APIResponse(JsonConvert.SerializeObject(new { status = systemStatus.ToString(), description = systemStatusDescription }));
         }
+
+        //below are test methods
 
         [APIMethod(Mapping = "meta/status", Verb = HttpVerb.POST)]
         private APIResponse PostSystemStatus(APIRequest request)

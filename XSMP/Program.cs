@@ -3,6 +3,7 @@ using System.IO;
 using System.Threading;
 using XSMP.ApiSurface;
 using XSMP.RestServer;
+using XSMP.MediaDatabase;
 
 namespace XSMP
 {
@@ -18,8 +19,9 @@ namespace XSMP
 
             SetupFolders();
             LoadUserConfig();
-            
-            APIController apiController = new APIController(new APISurface());
+
+            MediaDB mediaDatabase = new MediaDB();
+            APIController apiController = new APIController(new APISurface(mediaDatabase));
             RESTServer restServer = new RESTServer(apiController);
             Console.WriteLine("REST server started!");
 
@@ -34,6 +36,7 @@ namespace XSMP
             Console.WriteLine("Ending XSMP");
 
             restServer.Dispose();
+            mediaDatabase.Dispose();
         }
 
         public static void SignalExit()

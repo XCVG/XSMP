@@ -10,6 +10,8 @@ namespace XSMP
     /// </summary>
     public static class Config
     {
+        //TODO put/virtualize version information here
+
         public static string Hostname { get; } = "localhost";
         public static int Port { get; } = 1547;
         public static string UrlPrefix => $"http://{Hostname}:{Port}/";
