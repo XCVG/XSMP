@@ -18,12 +18,16 @@ namespace XSMP.RestServer
         {
             Api = apiController;
 
+            Console.WriteLine($"[RESTServer] Starting listener on {Config.UrlPrefix}");
+
             Listener = new HttpListener();
             Listener.Prefixes.Add(Config.UrlPrefix);
             Listener.Start();
 
             //I found out there was a native TPL version immediately after writing this
-            Listener.BeginGetContext(new AsyncCallback(HandleRequestCallback), Listener);        
+            Listener.BeginGetContext(new AsyncCallback(HandleRequestCallback), Listener);
+
+            Console.WriteLine("[RESTServer] REST server started!");
         }
 
         public void Dispose()

@@ -26,13 +26,6 @@ namespace XSMP.ApiSurface
             MediaDatabase = mediaDatabase;
         }
 
-        [APIMethod(Mapping = "meta/exit", Verb = HttpVerb.POST)]
-        private APIResponse PostExitRequest(APIRequest request)
-        {
-            Program.SignalExit();
-            return new APIResponse(JsonConvert.SerializeObject(new { description = "Shutting down XSMP" }));
-        }
-
         [APIMethod(Mapping = "meta/status", Verb = HttpVerb.GET)]
         private APIResponse GetSystemStatus(APIRequest request)
         {
@@ -42,23 +35,23 @@ namespace XSMP.ApiSurface
             switch (MediaDatabase.Status)
             {
                 case MediaDBStatus.Unknown:
-                    systemStatus = SystemStatus.NotReady;
+                    systemStatus = SystemStatus.notReady;
                     systemStatusDescription = "Media database is in unknown state";
                     break;
                 case MediaDBStatus.Loading:
-                    systemStatus = SystemStatus.NotReady;
+                    systemStatus = SystemStatus.notReady;
                     systemStatusDescription = "Media database is loading";
                     break;
                 case MediaDBStatus.Scanning:
-                    systemStatus = SystemStatus.NotReady;
+                    systemStatus = SystemStatus.notReady;
                     systemStatusDescription = "Media database is scanning";
                     break;
                 case MediaDBStatus.Ready:
-                    systemStatus = SystemStatus.Ready;
+                    systemStatus = SystemStatus.ready;
                     systemStatusDescription = "Ready";
                     break;
                 case MediaDBStatus.Error:
-                    systemStatus = SystemStatus.Error;
+                    systemStatus = SystemStatus.error;
                     systemStatusDescription = "Media database is in fault state";
                     break;
                 default:
@@ -66,6 +59,35 @@ namespace XSMP.ApiSurface
             }
 
             return new APIResponse(JsonConvert.SerializeObject(new { status = systemStatus.ToString(), description = systemStatusDescription }));
+        }
+
+        [APIMethod(Mapping = "meta/version", Verb = HttpVerb.GET)]
+        private APIResponse GetVersionInfo(APIRequest request)
+        {
+            return new APIResponse(JsonConvert.SerializeObject(new {
+                version = Config.ProductVersion.ToString(),
+                apiVersion = Config.APIVersion,
+                versionCodename = Config.VersionCodename,
+                description = Program.ProductNameString }));
+        }
+
+        [APIMethod(Mapping = "meta/exit", Verb = HttpVerb.POST)]
+        private APIResponse PostExitRequest(APIRequest request)
+        {
+            Program.SignalExit();
+            return new APIResponse(JsonConvert.SerializeObject(new { description = "Shutting down XSMP" }));
+        }
+
+        [APIMethod(Mapping = "meta/refresh", Verb = HttpVerb.POST)]
+        private APIResponse PostRefreshDatabase(APIRequest request)
+        {
+            throw new NotImplementedException();
+        }
+
+        [APIMethod(Mapping = "meta/flushcache", Verb = HttpVerb.POST)]
+        private APIResponse PostFlushCache(APIRequest request)
+        {
+            throw new NotImplementedException();
         }
 
         //below are test methods

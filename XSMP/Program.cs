@@ -13,7 +13,7 @@ namespace XSMP
 
         static void Main(string[] args)
         {
-            Console.WriteLine("Starting XCVG Systems Media Provider v0.1 \"Anette\"");
+            Console.WriteLine($"Starting {ProductNameString}");
 
             AppDomain.CurrentDomain.ProcessExit += new EventHandler(HandleExternalExit);
 
@@ -22,8 +22,7 @@ namespace XSMP
 
             MediaDB mediaDatabase = new MediaDB();
             APIController apiController = new APIController(new APISurface(mediaDatabase));
-            RESTServer restServer = new RESTServer(apiController);
-            Console.WriteLine("REST server started!");
+            RESTServer restServer = new RESTServer(apiController);            
 
             IsRunning = true;
 
@@ -93,5 +92,7 @@ namespace XSMP
 
             IsRunning = false;
         }
+
+        public static string ProductNameString => $"{Config.ProductName} v{Config.ProductVersion} \"{Config.VersionCodename}\" (API v{Config.APIVersion})";
     }
 }

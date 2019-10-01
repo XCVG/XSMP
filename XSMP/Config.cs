@@ -10,14 +10,12 @@ namespace XSMP
     /// </summary>
     public static class Config
     {
-        //TODO put/virtualize version information here
-
+        //net config
         public static string Hostname { get; } = "localhost";
         public static int Port { get; } = 1547;
-        public static string UrlPrefix => $"http://{Hostname}:{Port}/";
+        public static string UrlPrefix => $"http://{Hostname}:{Port}/";      
 
-        public static int APIVersion { get; } = 1;
-
+        //paths
         public static string CompanyFolder { get; } = "XCVG Systems";
 
         public static string DataFolderPath => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), CompanyFolder, "XSMP", "v" + APIVersion.ToString());
@@ -25,6 +23,14 @@ namespace XSMP
         public static string CacheFolderPath => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), CompanyFolder, "MediaCache");
 
         public static string UserConfigPath => Path.Combine(DataFolderPath, "config.json");
+
+        //product/version info
+        public static string ProductName { get; } = "XCVG Systems Media Provider";
+        public static Version ProductVersion => typeof(Program).Assembly.GetName().Version;
+        public static string VersionCodename { get; } = "Anette";
+        public static int APIVersion { get; } = 1;
+       
+
 
     }
 }

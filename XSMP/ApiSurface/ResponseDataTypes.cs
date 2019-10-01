@@ -6,6 +6,6 @@
     /// </summary>
     public enum SystemStatus
     {
-        NotReady, Ready, Error
+        notReady, ready, error
     }
 }
