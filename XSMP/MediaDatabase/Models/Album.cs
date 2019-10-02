@@ -7,6 +7,11 @@ namespace XSMP.MediaDatabase.Models
 {
     public partial class Album
     {
+        public Album()
+        {
+            Song = new HashSet<Song>();
+        }
+
         public string Name { get; set; }
         public string ArtistName { get; set; }
         [Required]
@@ -15,5 +20,7 @@ namespace XSMP.MediaDatabase.Models
         [ForeignKey("ArtistName")]
         [InverseProperty("Album")]
         public virtual Artist ArtistNameNavigation { get; set; }
+        [InverseProperty("Album")]
+        public virtual ICollection<Song> Song { get; set; }
     }
 }

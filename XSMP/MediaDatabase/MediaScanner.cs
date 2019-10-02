@@ -124,7 +124,7 @@ namespace XSMP.MediaDatabase
             ScrubArtistTable(dbContext);
             dbContext.SaveChanges();
 
-            dbContext.SaveChanges(); //should probably do this more often lol
+            //dbContext.SaveChanges(); //should probably do this more often lol
         }
 
         private static Dictionary<string, string> GetOldSongs(mediadbContext dbContext)
@@ -151,11 +151,12 @@ namespace XSMP.MediaDatabase
             //do we want to scrub names at this point? no, I think we need the full ones
             string title = string.IsNullOrEmpty(tags.Title) ? Path.GetFileNameWithoutExtension(songPath) : tags.Title;
             int track = (int)tags.Track;
-            int set = (int)tags.Disc;
+            int set = (int)tags.Disc; //TODO handle 1/1 = 0
             string genre = string.IsNullOrEmpty(tags.FirstGenre) ? null : tags.FirstGenre;
             //string artist = string.IsNullOrEmpty(tags.FirstPerformer) ? null : tags.FirstPerformer;
-            var artists = (tags.Performers != null && tags.Performers.Length > 0) ? new List<string>(tags.Performers) : new List<string>() { "Unknown"};
-            string albumArtist = string.IsNullOrEmpty(tags.FirstAlbumArtist) ? null : tags.FirstAlbumArtist;
+            bool hasArtists = (tags.Performers != null && tags.Performers.Length > 0);
+            var artists = hasArtists ? new List<string>(tags.Performers) : new List<string>() { "Unknown"};
+            string albumArtist = string.IsNullOrEmpty(tags.FirstAlbumArtist) ? (hasArtists ? artists[0] : null) : tags.FirstAlbumArtist;
             string album = string.IsNullOrEmpty(tags.Album) ? null : tags.Album;
 
             return new SongInfo() { Hash = hash, Title = title, Track = track, Set = set, Genre = genre,
@@ -174,8 +175,11 @@ namespace XSMP.MediaDatabase
                 if (string.IsNullOrEmpty(artistCName))
                     continue;
 
-                var artist = new Artist() { Name = artistCName, NiceName = artistName };
-                dbContext.Artist.Add(artist);
+                if (dbContext.Artist.Where(a => a.Name == artistCName).Count() == 0)
+                {
+                    var artist = new Artist() { Name = artistCName, NiceName = artistName };
+                    dbContext.Artist.Add(artist);
+                }
             }
 
             //check if album artist exists and add it if it does not
@@ -191,7 +195,7 @@ namespace XSMP.MediaDatabase
 
             //check if album exists and add it if it does not
             string albumCName = MediaUtils.GetCanonicalName(song.AlbumName);
-            if (!string.IsNullOrEmpty(albumCName))
+            if (!string.IsNullOrEmpty(albumCName) && !string.IsNullOrEmpty(albumArtistCName))
             {                                
                 if (dbContext.Album.Where(a => a.Name == albumCName).Count() == 0)
                 {

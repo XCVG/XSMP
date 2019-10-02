@@ -27,6 +27,7 @@ namespace XSMP.MediaDatabase
                 string dbInitialPath = Path.Combine(Program.ProgramFolderPath, "mediadb.sqlite");
                 Directory.CreateDirectory(Path.GetDirectoryName(dbPath));
                 File.Copy(dbInitialPath, dbPath);
+                Console.WriteLine($"[MediaDB] Created new media database at {dbPath}");
             }
 
             DBContext = new mediadbContext();
@@ -65,8 +66,8 @@ namespace XSMP.MediaDatabase
             }
             catch(Exception ex)
             {
-                Console.WriteLine("[MediaDB] Media scanner failed!");
-                Console.WriteLine(ex);
+                Console.Error.WriteLine("[MediaDB] Media scanner failed!");
+                Console.Error.WriteLine(ex);
             }
 
             //needed? safe?

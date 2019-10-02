@@ -23,6 +23,9 @@ namespace XSMP.MediaDatabase.Models
         public string AlbumName { get; set; }
         public string AlbumArtistName { get; set; }
 
+        [ForeignKey("AlbumName,AlbumArtistName")]
+        [InverseProperty("Song")]
+        public virtual Album Album { get; set; }
         [InverseProperty("SongHashNavigation")]
         public virtual ICollection<ArtistSong> ArtistSong { get; set; }
     }
