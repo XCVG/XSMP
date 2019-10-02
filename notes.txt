@@ -1,1 +1,1 @@
-Scaffold-DbContext "DataSource=E:\Programming\XSMP\XSMP\mediadb.sqlite" Microsoft.EntityFrameworkCore.Sqlite -OutputDir MediaDatabase -DataAnnotations
+Scaffold-DbContext "DataSource=E:\Programming\XSMP\XSMP\mediadb.sqlite" Microsoft.EntityFrameworkCore.Sqlite -OutputDir "MediaDatabase\Models" -DataAnnotations

@@ -24,8 +24,7 @@ namespace XSMP.MediaDatabase.Models
         {
             if (!optionsBuilder.IsConfigured)
             {
-#warning To protect potentially sensitive information in your connection string, you should move it out of source code. See http://go.microsoft.com/fwlink/?LinkId=723263 for guidance on storing connection strings.
-                optionsBuilder.UseSqlite($"DataSource={System.IO.Path.Combine(Config.DataFolderPath, "mediadb.sqlite")}");
+                optionsBuilder.UseSqlite($"DataSource={System.IO.Path.Combine(Config.LocalDataFolderPath, "mediadb.sqlite")}"); //TODO pass this in instead
             }
         }
 
@@ -37,8 +36,6 @@ namespace XSMP.MediaDatabase.Models
             {
                 entity.HasKey(e => new { e.Name, e.ArtistName });
 
-                entity.Property(e => e.Title).IsRequired();
-
                 entity.HasOne(d => d.ArtistNameNavigation)
                     .WithMany(p => p.Album)
                     .HasForeignKey(d => d.ArtistName)
@@ -47,11 +44,7 @@ namespace XSMP.MediaDatabase.Models
 
             modelBuilder.Entity<Artist>(entity =>
             {
-                entity.HasKey(e => e.Name);
-
                 entity.Property(e => e.Name).ValueGeneratedNever();
-
-                entity.Property(e => e.NiceName).IsRequired();
             });
 
             modelBuilder.Entity<ArtistSong>(entity =>
@@ -71,15 +64,7 @@ namespace XSMP.MediaDatabase.Models
 
             modelBuilder.Entity<Song>(entity =>
             {
-                entity.HasKey(e => e.Hash);
-
                 entity.Property(e => e.Hash).ValueGeneratedNever();
-
-                entity.Property(e => e.AlbumArtistName).IsRequired();
-
-                entity.Property(e => e.AlbumName).IsRequired();
-
-                entity.Property(e => e.Title).IsRequired();
             });
         }
     }

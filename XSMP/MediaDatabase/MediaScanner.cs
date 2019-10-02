@@ -20,19 +20,19 @@ namespace XSMP.MediaDatabase
             public string Hash { get; set; }
             public string Title { get; set; }
             public long Track { get; set; }
-            public long? Set { get; set; }
+            public long Set { get; set; }
             public string Genre { get; set; }
             public string Path { get; set; }
-            public string Artist { get; set; }
+            public List<string> Artists { get; set; }
             public string AlbumName { get; set; }
             public string AlbumArtistName { get; set; }
         }
 
-
+        //TODO ugly, move this
         private static SHA1 Sha1 = SHA1.Create();
 
 
-        public static async Task Scan(mediadbContext dbContext, CancellationToken cancellationToken)
+        public static void Scan(mediadbContext dbContext, CancellationToken cancellationToken)
         {
             //grab/create lists
             Dictionary<string, string> OldSongs = GetOldSongs(dbContext);
@@ -83,7 +83,7 @@ namespace XSMP.MediaDatabase
                             Console.WriteLine($"[MediaScanner] Added song {songInfo.Hash} at {songInfo.Path}");
                         }
                     }
-                    catch(Exception ex)
+                    catch (Exception ex)
                     {
                         Console.Error.WriteLine($"[MediaScanner] failed to add song {filePath} because of {ex.GetType().Name}");
                     }
@@ -93,10 +93,38 @@ namespace XSMP.MediaDatabase
             }
 
             //clear songs that no longer exist
+            foreach (var song in OldSongs)
+            {
+                var oldSong = dbContext.Song.Where(s => s.Hash == song.Key).First();
+                if (oldSong != null)
+                    dbContext.Song.Remove(oldSong);
+                else
+                    Console.Error.WriteLine($"Failed to remove song {song.Key} because it doesn't exist in the DB");
+
+                cancellationToken.ThrowIfCancellationRequested(); //safe?
+            }
+            dbContext.SaveChanges();
+
+            //do we need to manually scrub artistsong?
 
             //add new songs (adding new albums and artists as necessary)
+            foreach (var song in NewSongs)
+            {
+                AddSong(song.Value, dbContext);
+                dbContext.SaveChanges();
 
-            //scrub artist, album and artistsong (?) tables
+                cancellationToken.ThrowIfCancellationRequested(); //safe?
+            }
+
+            //scrub album table
+            ScrubAlbumTable(dbContext);
+            dbContext.SaveChanges();
+
+            //scrub artist table
+            ScrubArtistTable(dbContext);
+            dbContext.SaveChanges();
+
+            dbContext.SaveChanges(); //should probably do this more often lol
         }
 
         private static Dictionary<string, string> GetOldSongs(mediadbContext dbContext)
@@ -112,35 +140,121 @@ namespace XSMP.MediaDatabase
         private static SongInfo ReadSongInfo(string songPath)
         {
             //calcumalate hash
-            string hash = BytesToHexString(Sha1.ComputeHash(System.IO.File.ReadAllBytes(songPath)));
-
+            var hashBytes = Sha1.ComputeHash(System.IO.File.ReadAllBytes(songPath));
+            string hash = HashUtils.BytesToHexString(hashBytes);
+ 
             var tagFile = TagLib.File.Create(songPath);
             var tags = tagFile.Tag;
 
             //expect NULL or ZERO if the tag does not exists
+
+            //do we want to scrub names at this point? no, I think we need the full ones
             string title = string.IsNullOrEmpty(tags.Title) ? Path.GetFileNameWithoutExtension(songPath) : tags.Title;
             int track = (int)tags.Track;
             int set = (int)tags.Disc;
             string genre = string.IsNullOrEmpty(tags.FirstGenre) ? null : tags.FirstGenre;
-            string artist = string.IsNullOrEmpty(tags.FirstPerformer) ? null : tags.FirstPerformer;
+            //string artist = string.IsNullOrEmpty(tags.FirstPerformer) ? null : tags.FirstPerformer;
+            var artists = (tags.Performers != null && tags.Performers.Length > 0) ? new List<string>(tags.Performers) : new List<string>() { "Unknown"};
             string albumArtist = string.IsNullOrEmpty(tags.FirstAlbumArtist) ? null : tags.FirstAlbumArtist;
             string album = string.IsNullOrEmpty(tags.Album) ? null : tags.Album;
 
             return new SongInfo() { Hash = hash, Title = title, Track = track, Set = set, Genre = genre,
-                Path = songPath, Artist = artist, AlbumName = album, AlbumArtistName = albumArtist };
+                Path = songPath, Artists = artists, AlbumName = album, AlbumArtistName = albumArtist };
         }
 
-
-        /// <summary>
-        /// Converts a byte array to a hex string
-        /// </summary>
-        /// <remarks>
-        /// From https://stackoverflow.com/questions/623104/byte-to-hex-string/623184#623184
-        /// </remarks>
-        private static string BytesToHexString(byte[] bytes)
+        private static void AddSong(SongInfo song, mediadbContext dbContext)
         {
-            return BitConverter.ToString(bytes).Replace("-", string.Empty);
+            //check to see if artists exit and add them if they do not
+            string[] artistsCNames = song.Artists.Select(a => MediaUtils.GetCanonicalName(a)).ToArray();            
+            for(int i = 0; i < song.Artists.Count; i++)
+            {
+                string artistName = song.Artists[i];
+                string artistCName = artistsCNames[i];
+
+                if (string.IsNullOrEmpty(artistCName))
+                    continue;
+
+                var artist = new Artist() { Name = artistCName, NiceName = artistName };
+                dbContext.Artist.Add(artist);
+            }
+
+            //check if album artist exists and add it if it does not
+            string albumArtistCName = MediaUtils.GetCanonicalName(song.AlbumArtistName);
+            if (!string.IsNullOrEmpty(albumArtistCName) && !artistsCNames.Contains(albumArtistCName))
+            {
+                if (dbContext.Artist.Where(a => a.Name == albumArtistCName).Count() == 0)
+                {
+                    var artist = new Artist() { Name = albumArtistCName, NiceName = song.AlbumArtistName };
+                    dbContext.Artist.Add(artist);
+                }
+            }
+
+            //check if album exists and add it if it does not
+            string albumCName = MediaUtils.GetCanonicalName(song.AlbumName);
+            if (!string.IsNullOrEmpty(albumCName))
+            {                                
+                if (dbContext.Album.Where(a => a.Name == albumCName).Count() == 0)
+                {
+                    var album = new Album() { Name = albumCName, ArtistName = albumArtistCName, Title = song.AlbumArtistName };
+                    dbContext.Album.Add(album);
+                }
+            }
+
+            //genre should be a cname
+            string genreCName = MediaUtils.GetCanonicalName(song.Genre);
+
+            //create song object and add!
+            var songObject = new Song()
+            {
+                Hash = song.Hash,
+                Title = song.Title,
+                Genre = genreCName,
+                Set = song.Set,
+                Track = song.Track,
+                Path = song.Path,
+                AlbumName = albumCName,
+                AlbumArtistName = albumArtistCName
+            };
+            dbContext.Song.Add(songObject);
+
+            //create artist-song link objects
+            foreach(var artistCName in artistsCNames)
+            {
+                var artistsong = new ArtistSong() { ArtistName = artistCName, SongHash = song.Hash };
+                dbContext.ArtistSong.Add(artistsong);
+            }
         }
+
+        //will the below break on delete?
+
+        private static void ScrubAlbumTable(mediadbContext dbContext)
+        {
+            var albums = dbContext.Album;
+            foreach (var album in albums)
+            {
+                int songCount = dbContext.Song.Select(s => s.AlbumName == album.Name).Count();
+                if (songCount == 0)
+                {
+                    dbContext.Album.Remove(album);
+                }
+            }
+        }
+
+        private static void ScrubArtistTable(mediadbContext dbContext)
+        {
+            var artists = dbContext.Artist;
+            foreach (var artist in artists)
+            {
+                int albumCount = dbContext.Album.Select(a => a.ArtistName == artist.Name).Count();
+                int songCount = dbContext.ArtistSong.Select(a => a.ArtistName == artist.Name).Count();
+                if (albumCount == 0 && songCount == 0)
+                {
+                    dbContext.Artist.Remove(artist);
+                }
+            }
+        }
+
+
 
         /// <summary>
         /// Gets all files in path

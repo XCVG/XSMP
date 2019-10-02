@@ -21,10 +21,11 @@ namespace XSMP.MediaDatabase
         {
             //copy initial mediadb if it doesn't exist
 
-            string dbPath = Path.Combine(Config.DataFolderPath, "mediadb.sqlite");
+            string dbPath = Path.Combine(Config.LocalDataFolderPath, "mediadb.sqlite");
             if(!File.Exists(dbPath))
             {
                 string dbInitialPath = Path.Combine(Program.ProgramFolderPath, "mediadb.sqlite");
+                Directory.CreateDirectory(Path.GetDirectoryName(dbPath));
                 File.Copy(dbInitialPath, dbPath);
             }
 
@@ -54,11 +55,19 @@ namespace XSMP.MediaDatabase
         }
 
         //entry point for media scan
-        private async Task MediaScan(CancellationToken token)
+        private void MediaScan(CancellationToken token)
         {
             State = MediaDBState.Scanning;
 
-            await MediaScanner.Scan(DBContext, token);
+            try
+            {
+                MediaScanner.Scan(DBContext, token);
+            }
+            catch(Exception ex)
+            {
+                Console.WriteLine("[MediaDB] Media scanner failed!");
+                Console.WriteLine(ex);
+            }
 
             //needed? safe?
             ScannerTask = null;
