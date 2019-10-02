@@ -50,16 +50,6 @@ namespace XSMP.MediaDatabase.Models
             modelBuilder.Entity<ArtistSong>(entity =>
             {
                 entity.HasKey(e => new { e.SongHash, e.ArtistName });
-
-                entity.HasOne(d => d.ArtistNameNavigation)
-                    .WithMany(p => p.ArtistSong)
-                    .HasForeignKey(d => d.ArtistName)
-                    .OnDelete(DeleteBehavior.ClientSetNull);
-
-                entity.HasOne(d => d.SongHashNavigation)
-                    .WithMany(p => p.ArtistSong)
-                    .HasForeignKey(d => d.SongHash)
-                    .OnDelete(DeleteBehavior.ClientSetNull);
             });
 
             modelBuilder.Entity<Song>(entity =>

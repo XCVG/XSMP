@@ -97,15 +97,21 @@ namespace XSMP.MediaDatabase
             {
                 var oldSong = dbContext.Song.Where(s => s.Hash == song.Key).First();
                 if (oldSong != null)
+                {
+                    //manually scrub ArtistSong, because EF Core is fucking us
+                    var songArtists = dbContext.ArtistSong.Where(a => a.SongHash == oldSong.Hash);
+                    dbContext.ArtistSong.RemoveRange(songArtists);
+
                     dbContext.Song.Remove(oldSong);
+                }
                 else
                     Console.Error.WriteLine($"Failed to remove song {song.Key} because it doesn't exist in the DB");
 
                 cancellationToken.ThrowIfCancellationRequested(); //safe?
-            }
-            dbContext.SaveChanges();
 
-            //do we need to manually scrub artistsong?
+                dbContext.SaveChanges();
+            }
+            //dbContext.SaveChanges();
 
             //add new songs (adding new albums and artists as necessary)
             foreach (var song in NewSongs)
@@ -230,13 +236,13 @@ namespace XSMP.MediaDatabase
         }
 
         //will the below break on delete?
-
+        //no, but it doesn't work at all
         private static void ScrubAlbumTable(mediadbContext dbContext)
         {
             var albums = dbContext.Album;
             foreach (var album in albums)
             {
-                int songCount = dbContext.Song.Select(s => s.AlbumName == album.Name).Count();
+                int songCount = dbContext.Song.Where(s => s.AlbumName == album.Name).Count();
                 if (songCount == 0)
                 {
                     dbContext.Album.Remove(album);
@@ -249,8 +255,8 @@ namespace XSMP.MediaDatabase
             var artists = dbContext.Artist;
             foreach (var artist in artists)
             {
-                int albumCount = dbContext.Album.Select(a => a.ArtistName == artist.Name).Count();
-                int songCount = dbContext.ArtistSong.Select(a => a.ArtistName == artist.Name).Count();
+                int albumCount = dbContext.Album.Where(a => a.ArtistName == artist.Name).Count();
+                int songCount = dbContext.ArtistSong.Where(a => a.ArtistName == artist.Name).Count();
                 if (albumCount == 0 && songCount == 0)
                 {
                     dbContext.Artist.Remove(artist);

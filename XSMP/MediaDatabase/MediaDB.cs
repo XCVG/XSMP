@@ -29,6 +29,10 @@ namespace XSMP.MediaDatabase
                 File.Copy(dbInitialPath, dbPath);
                 Console.WriteLine($"[MediaDB] Created new media database at {dbPath}");
             }
+            else
+            {
+                Console.WriteLine($"[MediaDB] Found media database at {dbPath}");
+            }
 
             DBContext = new mediadbContext();
 

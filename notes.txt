@@ -1,1 +1,5 @@
-Scaffold-DbContext "DataSource=E:\Programming\XSMP\XSMP\mediadb.sqlite" Microsoft.EntityFrameworkCore.Sqlite -OutputDir "MediaDatabase\Models" -DataAnnotations
+Scaffold-DbContext "DataSource=E:\Programming\XSMP\XSMP\mediadb.sqlite" Microsoft.EntityFrameworkCore.Sqlite -OutputDir "MediaDatabase\Models" -DataAnnotations -Force
+
+optionsBuilder.UseSqlite($"DataSource={System.IO.Path.Combine(Config.LocalDataFolderPath, "mediadb.sqlite")}"); //TODO pass this in instead
+
+b => b.SuppressForeignKeyEnforcement(true)
