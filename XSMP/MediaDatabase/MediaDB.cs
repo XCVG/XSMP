@@ -8,21 +8,53 @@ using XSMP.MediaDatabase.Models;
 
 namespace XSMP.MediaDatabase
 {
+
+    /// <summary>
+    /// Wrapper class for the media database
+    /// </summary>
     public class MediaDB : IDisposable
     {
         public MediaDBState State { get; private set; } = MediaDBState.Loading;
 
         private mediadbContext DBContext;
 
+        private bool IsRebuilding;
         private Task ScannerTask;
         private CancellationTokenSource ScannerTokenSource;
+
+        private string DatabasePath => Path.Combine(Config.LocalDataFolderPath, "mediadb.sqlite");
 
         public MediaDB()
         {
             //copy initial mediadb if it doesn't exist
 
-            string dbPath = Path.Combine(Config.LocalDataFolderPath, "mediadb.sqlite");
-            if(!File.Exists(dbPath))
+            CreateDatabaseFile();
+
+            OpenDatabase();
+
+            StartMediaScan();
+        }
+
+        public void Dispose()
+        {
+            ScannerTokenSource?.Cancel();
+
+            //WIP dispose
+            CloseDatabase();
+        }
+
+        private void DeleteDatabaseFile()
+        {
+            if(File.Exists(DatabasePath))
+            {
+                File.Delete(DatabasePath);
+            }
+        }
+
+        private void CreateDatabaseFile()
+        {
+            string dbPath = DatabasePath;
+            if (!File.Exists(dbPath))
             {
                 string dbInitialPath = Path.Combine(Program.ProgramFolderPath, "mediadb.sqlite");
                 Directory.CreateDirectory(Path.GetDirectoryName(dbPath));
@@ -33,19 +65,33 @@ namespace XSMP.MediaDatabase
             {
                 Console.WriteLine($"[MediaDB] Found media database at {dbPath}");
             }
-
-            DBContext = new mediadbContext();
-
-            StartMediaScan();
         }
 
-        public void Dispose()
+        private void OpenDatabase()
+        {
+            DBContext = new mediadbContext();
+        }
+
+        private void CloseDatabase()
+        {
+            if (DBContext != null)
+            {
+                DBContext.Dispose();
+                DBContext = null;
+            }
+        }
+
+        public void StartRebuild()
         {
             ScannerTokenSource?.Cancel();
+            ScannerTask?.Wait();
 
-            //WIP dispose
-            if(DBContext != null)
-                DBContext.Dispose();
+            CloseDatabase();
+            DeleteDatabaseFile();
+            CreateDatabaseFile();
+            OpenDatabase();
+
+            StartMediaScan();
         }
 
         public void StartMediaScan()
@@ -67,18 +113,25 @@ namespace XSMP.MediaDatabase
             try
             {
                 MediaScanner.Scan(DBContext, token);
+                State = MediaDBState.Ready;
             }
             catch(Exception ex)
             {
                 Console.Error.WriteLine("[MediaDB] Media scanner failed!");
                 Console.Error.WriteLine(ex);
+
+                if(!(ex is TaskCanceledException))
+                    State = MediaDBState.Error;
             }
 
             //needed? safe?
+            IsRebuilding = false;
             ScannerTask = null;
             ScannerTokenSource = null;
+
         }
 
-        //TODO: everything
+        //TODO querying
+        
     }
 }

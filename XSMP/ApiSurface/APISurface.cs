@@ -81,7 +81,15 @@ namespace XSMP.ApiSurface
         [APIMethod(Mapping = "meta/refresh", Verb = HttpVerb.POST)]
         private APIResponse PostRefreshDatabase(APIRequest request)
         {
-            throw new NotImplementedException();
+            MediaDatabase.StartMediaScan();
+            return new APIResponse(JsonConvert.SerializeObject(new { description = "Starting media scan" }));
+        }
+
+        [APIMethod(Mapping = "meta/rebuild", Verb = HttpVerb.POST)]
+        private APIResponse PostRebuildDatabase(APIRequest request)
+        {
+            MediaDatabase.StartRebuild();
+            return new APIResponse(JsonConvert.SerializeObject(new { description = "Starting media database rebuild" }));
         }
 
         [APIMethod(Mapping = "meta/flushcache", Verb = HttpVerb.POST)]

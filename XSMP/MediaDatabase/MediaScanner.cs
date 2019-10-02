@@ -79,7 +79,7 @@ namespace XSMP.MediaDatabase
                             else
                             {
                                 //path has changed
-                                OldSongs.Remove(songInfo.Hash);
+                                //OldSongs.Remove(songInfo.Hash);
                                 NewSongs.Add(songInfo.Hash, songInfo);
                                 //Console.WriteLine($"[MediaScanner] Readded song {songInfo.Hash} at {songInfo.Path} (moved from {oldPath})");
                             }
@@ -182,6 +182,8 @@ namespace XSMP.MediaDatabase
             string title = string.IsNullOrEmpty(tags.Title) ? Path.GetFileNameWithoutExtension(songPath) : tags.Title;
             int track = (int)tags.Track;
             int set = (int)tags.Disc; //TODO handle 1/1 = 0
+            if (set == 1 && tags.DiscCount == 1)
+                set = 0;
             string genre = string.IsNullOrEmpty(tags.FirstGenre) ? null : tags.FirstGenre;
             //string artist = string.IsNullOrEmpty(tags.FirstPerformer) ? null : tags.FirstPerformer;
             bool hasArtists = (tags.Performers != null && tags.Performers.Length > 0);
@@ -272,10 +274,12 @@ namespace XSMP.MediaDatabase
         //no, but it doesn't work at all
         private static void ScrubAlbumTable(mediadbContext dbContext)
         {
+            //not quite right; need to handle composite key properly
+
             var albums = dbContext.Album;
             foreach (var album in albums)
             {
-                int songCount = dbContext.Song.Where(s => s.AlbumName == album.Name).Count();
+                int songCount = dbContext.Song.Where(s => s.AlbumName == album.Name && s.AlbumArtistName == album.ArtistName).Count();
                 if (songCount == 0)
                 {
                     dbContext.Album.Remove(album);
