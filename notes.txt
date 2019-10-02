@@ -3,3 +3,5 @@ Scaffold-DbContext "DataSource=E:\Programming\XSMP\XSMP\mediadb.sqlite" Microsof
 optionsBuilder.UseSqlite($"DataSource={System.IO.Path.Combine(Config.LocalDataFolderPath, "mediadb.sqlite")}"); //TODO pass this in instead
 
 b => b.SuppressForeignKeyEnforcement(true)
+
+{"MediaFolders":["E:\\Music"]}

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -34,6 +35,8 @@ namespace XSMP.MediaDatabase
 
         public static void Scan(mediadbContext dbContext, CancellationToken cancellationToken)
         {
+            Stopwatch sw = Stopwatch.StartNew();
+
             //grab/create lists
             Dictionary<string, string> OldSongs = GetOldSongs(dbContext);
             Dictionary<string, string> ExistingSongs = new Dictionary<string, string>(OldSongs.Count);
@@ -47,6 +50,10 @@ namespace XSMP.MediaDatabase
 
                 foreach (string filePath in GetFiles(libraryFolder))
                 {
+                    string extension = Path.GetExtension(filePath);
+                    if (!Config.MediaFileExtensions.Contains(extension))
+                        continue;
+
                     try
                     {
                         SongInfo songInfo = ReadSongInfo(filePath);
@@ -54,7 +61,7 @@ namespace XSMP.MediaDatabase
                         //ignore duplicates
                         if (ExistingSongs.ContainsKey(songInfo.Hash) || NewSongs.ContainsKey(songInfo.Hash))
                         {
-                            Console.WriteLine($"[MediaScanner] Skipping song {songInfo.Hash} at {filePath} because it already exists");
+                            //Console.WriteLine($"[MediaScanner] Skipping song {songInfo.Hash} at {filePath} because it already exists");
                             continue;
                         }
 
@@ -67,20 +74,20 @@ namespace XSMP.MediaDatabase
                                 OldSongs.Remove(songInfo.Hash);
                                 ExistingSongs.Add(songInfo.Hash, songInfo.Path);
 
-                                Console.WriteLine($"[MediaScanner] Readded song {songInfo.Hash} at {songInfo.Path}");
+                                //Console.WriteLine($"[MediaScanner] Readded song {songInfo.Hash} at {songInfo.Path}");
                             }
                             else
                             {
                                 //path has changed
                                 OldSongs.Remove(songInfo.Hash);
                                 NewSongs.Add(songInfo.Hash, songInfo);
-                                Console.WriteLine($"[MediaScanner] Readded song {songInfo.Hash} at {songInfo.Path} (moved from {oldPath})");
+                                //Console.WriteLine($"[MediaScanner] Readded song {songInfo.Hash} at {songInfo.Path} (moved from {oldPath})");
                             }
                         }
                         else
                         {
                             NewSongs.Add(songInfo.Hash, songInfo);
-                            Console.WriteLine($"[MediaScanner] Added song {songInfo.Hash} at {songInfo.Path}");
+                            //Console.WriteLine($"[MediaScanner] Added song {songInfo.Hash} at {songInfo.Path}");
                         }
                     }
                     catch (Exception ex)
@@ -93,6 +100,7 @@ namespace XSMP.MediaDatabase
             }
 
             //clear songs that no longer exist
+            Console.WriteLine($"[MediaScanner] Clearing {OldSongs.Count} songs from database");
             foreach (var song in OldSongs)
             {
                 var oldSong = dbContext.Song.Where(s => s.Hash == song.Key).First();
@@ -105,7 +113,7 @@ namespace XSMP.MediaDatabase
                     dbContext.Song.Remove(oldSong);
                 }
                 else
-                    Console.Error.WriteLine($"Failed to remove song {song.Key} because it doesn't exist in the DB");
+                    Console.Error.WriteLine($"[MediaScanner] Failed to remove song {song.Key} because it doesn't exist in the DB");
 
                 cancellationToken.ThrowIfCancellationRequested(); //safe?
 
@@ -114,23 +122,39 @@ namespace XSMP.MediaDatabase
             //dbContext.SaveChanges();
 
             //add new songs (adding new albums and artists as necessary)
+            Console.WriteLine($"[MediaScanner] Adding {NewSongs.Count} songs to database");
             foreach (var song in NewSongs)
             {
-                AddSong(song.Value, dbContext);
-                dbContext.SaveChanges();
+                try
+                {
+                    AddSong(song.Value, dbContext);
+                    dbContext.SaveChanges();
+                }
+                catch(Exception ex)
+                {
+                    Console.Error.WriteLine(ex);
+                    throw ex;
+                }
 
                 cancellationToken.ThrowIfCancellationRequested(); //safe?
             }
 
             //scrub album table
+            Console.WriteLine($"[MediaScanner] Scrubbing album table");
             ScrubAlbumTable(dbContext);
             dbContext.SaveChanges();
 
             //scrub artist table
+            Console.WriteLine($"[MediaScanner] Scrubbing artist table");
             ScrubArtistTable(dbContext);
             dbContext.SaveChanges();
 
-            //dbContext.SaveChanges(); //should probably do this more often lol
+            sw.Stop();
+            
+
+            Console.WriteLine($"[MediaScanner] Done scanning media library ({sw.Elapsed.TotalSeconds:F2}s)");
+
+            
         }
 
         private static Dictionary<string, string> GetOldSongs(mediadbContext dbContext)
@@ -172,11 +196,20 @@ namespace XSMP.MediaDatabase
         private static void AddSong(SongInfo song, mediadbContext dbContext)
         {
             //check to see if artists exit and add them if they do not
-            string[] artistsCNames = song.Artists.Select(a => MediaUtils.GetCanonicalName(a)).ToArray();            
-            for(int i = 0; i < song.Artists.Count; i++)
+            //var artistsCNames = song.Artists.Select(a => new KeyValuePair<string, string>(MediaUtils.GetCanonicalName(a), a)).Distinct().ToDictionary(kvp => kvp.Key,;
+            var artistsCNames = new Dictionary<string, string>();
+            foreach(var artist in song.Artists)
             {
-                string artistName = song.Artists[i];
-                string artistCName = artistsCNames[i];
+                string artistCName = MediaUtils.GetCanonicalName(artist);
+                if (artistsCNames.ContainsKey(artistCName))
+                    continue;
+                artistsCNames.Add(artistCName, artist);
+            }
+
+            foreach(var kvp in artistsCNames)
+            {
+                string artistCName = kvp.Key;
+                string artistName = kvp.Value;                
 
                 if (string.IsNullOrEmpty(artistCName))
                     continue;
@@ -190,7 +223,7 @@ namespace XSMP.MediaDatabase
 
             //check if album artist exists and add it if it does not
             string albumArtistCName = MediaUtils.GetCanonicalName(song.AlbumArtistName);
-            if (!string.IsNullOrEmpty(albumArtistCName) && !artistsCNames.Contains(albumArtistCName))
+            if (!string.IsNullOrEmpty(albumArtistCName) && !artistsCNames.ContainsKey(albumArtistCName))
             {
                 if (dbContext.Artist.Where(a => a.Name == albumArtistCName).Count() == 0)
                 {
@@ -203,9 +236,9 @@ namespace XSMP.MediaDatabase
             string albumCName = MediaUtils.GetCanonicalName(song.AlbumName);
             if (!string.IsNullOrEmpty(albumCName) && !string.IsNullOrEmpty(albumArtistCName))
             {                                
-                if (dbContext.Album.Where(a => a.Name == albumCName).Count() == 0)
+                if (dbContext.Album.Where(a => a.Name == albumCName && a.ArtistName == albumArtistCName).Count() == 0)
                 {
-                    var album = new Album() { Name = albumCName, ArtistName = albumArtistCName, Title = song.AlbumArtistName };
+                    var album = new Album() { Name = albumCName, ArtistName = albumArtistCName, Title = song.AlbumName };
                     dbContext.Album.Add(album);
                 }
             }
@@ -228,7 +261,7 @@ namespace XSMP.MediaDatabase
             dbContext.Song.Add(songObject);
 
             //create artist-song link objects
-            foreach(var artistCName in artistsCNames)
+            foreach(var artistCName in artistsCNames.Keys)
             {
                 var artistsong = new ArtistSong() { ArtistName = artistCName, SongHash = song.Hash };
                 dbContext.ArtistSong.Add(artistsong);
