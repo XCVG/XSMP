@@ -28,4 +28,9 @@
     <PackageReference Include="UrlBase64" Version="0.1.2" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="MediaDatabase\PublicModels\" />
+    <Folder Include="MediaTranscoder\" />
+  </ItemGroup>
+
 </Project>

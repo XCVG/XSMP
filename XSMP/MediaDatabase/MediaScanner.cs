@@ -178,6 +178,8 @@ namespace XSMP.MediaDatabase
                 cancellationToken.ThrowIfCancellationRequested(); //safe?
             }
 
+            Console.WriteLine($"[MediaScanner] Added {insertedSongs}/{totalSongs} to database");
+
             //scrub album table
             Console.WriteLine($"[MediaScanner] Scrubbing album table");
             try
