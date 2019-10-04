@@ -83,6 +83,8 @@ namespace XSMP.MediaDatabase
 
         public void StartRebuild()
         {
+            IsRebuilding = true;
+
             ScannerTokenSource?.Cancel();
             ScannerTask?.Wait();
 
@@ -96,7 +98,7 @@ namespace XSMP.MediaDatabase
 
         public void StartMediaScan()
         {
-            if (State == MediaDBState.Loading || State == MediaDBState.Ready)
+            if ((State == MediaDBState.Loading || State == MediaDBState.Ready) && !IsRebuilding)
             {
                 //kick off media scanning on a thread
                 ScannerTokenSource = new CancellationTokenSource();
@@ -110,18 +112,32 @@ namespace XSMP.MediaDatabase
         {
             State = MediaDBState.Scanning;
 
-            try
-            {
-                MediaScanner.Scan(DBContext, token);
-                State = MediaDBState.Ready;
-            }
-            catch(Exception ex)
-            {
-                Console.Error.WriteLine("[MediaDB] Media scanner failed!");
-                Console.Error.WriteLine(ex);
+            int scanRetryCount = 0;
 
-                if(!(ex is TaskCanceledException))
-                    State = MediaDBState.Error;
+            while (State != MediaDBState.Ready && scanRetryCount < Config.MediaScannerRetryCount)
+            {
+                try
+                {
+                    MediaScanner.Scan(DBContext, token);
+                    State = MediaDBState.Ready;
+                }
+                catch (Exception ex)
+                {
+                    Console.Error.WriteLine("[MediaDB] Media scanner failed!");
+                    Console.Error.WriteLine(ex);
+
+                    if (ex is TaskCanceledException)
+                    {
+                        State = MediaDBState.Loading;
+                        break;
+                    }
+                    else
+                    {
+                        State = MediaDBState.Error;
+                        scanRetryCount++;
+                    }
+                    
+                }
             }
 
             //needed? safe?

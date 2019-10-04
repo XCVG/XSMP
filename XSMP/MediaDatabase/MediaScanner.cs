@@ -99,30 +99,46 @@ namespace XSMP.MediaDatabase
                 }
             }
 
+            int totalRows = OldSongs.Count + NewSongs.Count;
+            int maxDBErrors = Math.Max(Config.MediaScannerMaxDBErrorMinCount, (int)(totalRows * Config.MediaScannerMaxDBErrorRatio));
+            int dbErrors = 0;
+
             //clear songs that no longer exist
             Console.WriteLine($"[MediaScanner] Clearing {OldSongs.Count} songs from database");
             foreach (var song in OldSongs)
             {
-                var oldSong = dbContext.Song.Where(s => s.Hash == song.Key).First();
-                if (oldSong != null)
+                try
                 {
-                    //manually scrub ArtistSong, because EF Core is fucking us
-                    var songArtists = dbContext.ArtistSong.Where(a => a.SongHash == oldSong.Hash);
-                    dbContext.ArtistSong.RemoveRange(songArtists);
+                    var oldSong = dbContext.Song.Where(s => s.Hash == song.Key).First();
+                    if (oldSong != null)
+                    {
+                        //manually scrub ArtistSong, because EF Core is fucking us
+                        var songArtists = dbContext.ArtistSong.Where(a => a.SongHash == oldSong.Hash);
+                        dbContext.ArtistSong.RemoveRange(songArtists);
 
-                    dbContext.Song.Remove(oldSong);
+                        dbContext.Song.Remove(oldSong);
+                    }
+                    else
+                        Console.Error.WriteLine($"[MediaScanner] Failed to remove song {song.Key} because it doesn't exist in the DB");
+
+                    cancellationToken.ThrowIfCancellationRequested(); //safe?
+
+                    dbContext.SaveChanges();
                 }
-                else
-                    Console.Error.WriteLine($"[MediaScanner] Failed to remove song {song.Key} because it doesn't exist in the DB");
-
-                cancellationToken.ThrowIfCancellationRequested(); //safe?
-
-                dbContext.SaveChanges();
+                catch(Exception ex)
+                {
+                    Console.Error.WriteLine($"[MediaScanner] Database Error: {ex.GetType().Name}\n{ex.Message}");
+                    dbErrors++;
+                }
             }
             //dbContext.SaveChanges();
 
             //add new songs (adding new albums and artists as necessary)
-            Console.WriteLine($"[MediaScanner] Adding {NewSongs.Count} songs to database");
+            int totalSongs = NewSongs.Count;
+            int insertedSongs = 0;
+
+            Console.WriteLine($"[MediaScanner] Adding {totalSongs} songs to database");
+            
             foreach (var song in NewSongs)
             {
                 try
@@ -132,8 +148,16 @@ namespace XSMP.MediaDatabase
                 }
                 catch(Exception ex)
                 {
-                    Console.Error.WriteLine(ex);
-                    throw ex;
+                    Console.Error.WriteLine($"[MediaScanner] Database Error: {ex.GetType().Name}\n{ex.Message}");
+                    dbErrors++;
+                    ThrowIfMaxErrors(dbErrors, maxDBErrors);
+                }
+
+                insertedSongs++;
+
+                if(insertedSongs % totalSongs == 0)
+                {
+                    Console.WriteLine($"[MediaScanner] Added {insertedSongs}/{totalSongs} to database");
                 }
 
                 cancellationToken.ThrowIfCancellationRequested(); //safe?
@@ -141,13 +165,31 @@ namespace XSMP.MediaDatabase
 
             //scrub album table
             Console.WriteLine($"[MediaScanner] Scrubbing album table");
-            ScrubAlbumTable(dbContext);
-            dbContext.SaveChanges();
+            try
+            {
+                ScrubAlbumTable(dbContext);
+                dbContext.SaveChanges();
+            }
+            catch(Exception ex)
+            {
+                Console.Error.WriteLine($"[MediaScanner] Database Error: {ex.GetType().Name}\n{ex.Message}");
+                dbErrors++;
+                ThrowIfMaxErrors(dbErrors, maxDBErrors);
+            }
 
             //scrub artist table
             Console.WriteLine($"[MediaScanner] Scrubbing artist table");
-            ScrubArtistTable(dbContext);
-            dbContext.SaveChanges();
+            try
+            {
+                ScrubArtistTable(dbContext);
+                dbContext.SaveChanges();
+            }
+            catch(Exception ex)
+            {
+                Console.Error.WriteLine($"[MediaScanner] Database Error: {ex.GetType().Name}\n{ex.Message}");
+                dbErrors++;
+                ThrowIfMaxErrors(dbErrors, maxDBErrors);
+            }
 
             sw.Stop();
             
@@ -301,7 +343,11 @@ namespace XSMP.MediaDatabase
             }
         }
 
-
+        private static void ThrowIfMaxErrors(int dbErrors, int maxDbErrors)
+        {
+            if (dbErrors >= maxDbErrors)
+                throw new InvalidOperationException(); //TODO better custom exception
+        }
 
         /// <summary>
         /// Gets all files in path
