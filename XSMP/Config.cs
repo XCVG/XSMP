@@ -20,10 +20,10 @@ namespace XSMP
 
         //paths
         public static string CompanyFolder { get; } = "XCVG Systems";
-        public static string DataFolderPath => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), CompanyFolder, "XSMP", "v" + APIVersion.ToString());
-        public static string LocalDataFolderPath => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), CompanyFolder, "XSMP", "v" + APIVersion.ToString());
+        public static string DataFolderPath => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), CompanyFolder, "XSMP", "v" + ProductVersion.Major.ToString());
+        public static string LocalDataFolderPath => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), CompanyFolder, "XSMP", "v" + ProductVersion.Major.ToString());
         public static string CacheFolderPath => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), CompanyFolder, "MediaCache");
-        public static string UserConfigPath => Path.Combine(DataFolderPath, "config.json");
+        public static string UserConfigPath => Path.Combine(LocalDataFolderPath, "config.json");
 
         //product/version info
         public static string ProductName { get; } = "XCVG Systems Media Provider";

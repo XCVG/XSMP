@@ -57,6 +57,17 @@ namespace XSMP
                 Console.WriteLine("Created data folder at " + dataPath);
             }
 
+            string localDataPath = Config.LocalDataFolderPath;
+            if(Directory.Exists(localDataPath))
+            {
+                Console.WriteLine("Found local data folder at " + localDataPath);
+            }
+            else
+            {
+                Directory.CreateDirectory(localDataPath);
+                Console.WriteLine("Created local data folder at " + localDataPath);
+            }
+
             string cachePath = Config.CacheFolderPath;
             if (Directory.Exists(cachePath))
             {

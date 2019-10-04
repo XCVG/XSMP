@@ -44,6 +44,7 @@ namespace XSMP.MediaDatabase
 
             //enumerate songs in library folders
             //TODO try/catch (resilience)
+            int scannedFiles = 0;
             foreach (string libraryFolder in UserConfig.Instance.MediaFolders)
             {
                 Console.WriteLine($"[MediaScanner] Scanning library folder {libraryFolder}");
@@ -95,9 +96,18 @@ namespace XSMP.MediaDatabase
                         Console.Error.WriteLine($"[MediaScanner] failed to add song {filePath} because of {ex.GetType().Name}");
                     }
 
+                    scannedFiles++;
+                    //reporting
+                    if(scannedFiles % Config.MediaScannerReportInterval == 0)
+                    {
+                        Console.WriteLine($"[MediaScanner] Scanned {scannedFiles} files");
+                    }
+
                     cancellationToken.ThrowIfCancellationRequested();
                 }
             }
+
+            Console.WriteLine($"[MediaScanner] Scanned {scannedFiles} files");
 
             int totalRows = OldSongs.Count + NewSongs.Count;
             int maxDBErrors = Math.Max(Config.MediaScannerMaxDBErrorMinCount, (int)(totalRows * Config.MediaScannerMaxDBErrorRatio));
@@ -121,9 +131,9 @@ namespace XSMP.MediaDatabase
                     else
                         Console.Error.WriteLine($"[MediaScanner] Failed to remove song {song.Key} because it doesn't exist in the DB");
 
-                    cancellationToken.ThrowIfCancellationRequested(); //safe?
-
                     dbContext.SaveChanges();
+
+                    cancellationToken.ThrowIfCancellationRequested();                                       
                 }
                 catch(Exception ex)
                 {
@@ -135,6 +145,7 @@ namespace XSMP.MediaDatabase
 
             //add new songs (adding new albums and artists as necessary)
             int totalSongs = NewSongs.Count;
+            int insertReportInterval = Config.MediaScannerReportInterval; //will be more complex later
             int insertedSongs = 0;
 
             Console.WriteLine($"[MediaScanner] Adding {totalSongs} songs to database");
@@ -155,7 +166,7 @@ namespace XSMP.MediaDatabase
 
                 insertedSongs++;
 
-                if(insertedSongs % totalSongs == 0)
+                if(insertedSongs % insertReportInterval == 0)
                 {
                     Console.WriteLine($"[MediaScanner] Added {insertedSongs}/{totalSongs} to database");
                 }
@@ -194,7 +205,7 @@ namespace XSMP.MediaDatabase
             sw.Stop();
             
 
-            Console.WriteLine($"[MediaScanner] Done scanning media library ({sw.Elapsed.TotalSeconds:F2}s)");
+            Console.WriteLine($"[MediaScanner] Done scanning media library ({sw.Elapsed.TotalSeconds:F2}s, {dbErrors} errors)");
 
             
         }
