@@ -85,6 +85,8 @@ namespace XSMP.MediaDatabase
         {
             IsRebuilding = true;
 
+            Console.WriteLine($"[MediaDB] Starting media database rebuild!");
+
             ScannerTokenSource?.Cancel();
             ScannerTask?.Wait();
 
@@ -122,17 +124,18 @@ namespace XSMP.MediaDatabase
                     State = MediaDBState.Ready;
                 }
                 catch (Exception ex)
-                {
-                    Console.Error.WriteLine("[MediaDB] Media scanner failed!");
-                    Console.Error.WriteLine(ex);
+                {                 
 
-                    if (ex is TaskCanceledException)
+                    if (ex is TaskCanceledException || ex is OperationCanceledException)
                     {
+                        Console.WriteLine("[MediaDB] Media scanner aborted!");
                         State = MediaDBState.Loading;
                         break;
                     }
                     else
                     {
+                        Console.Error.WriteLine("[MediaDB] Media scanner failed!");
+                        Console.Error.WriteLine(ex);
                         State = MediaDBState.Error;
                         scanRetryCount++;
                     }

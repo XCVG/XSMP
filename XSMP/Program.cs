@@ -4,6 +4,7 @@ using System.Threading;
 using XSMP.ApiSurface;
 using XSMP.RestServer;
 using XSMP.MediaDatabase;
+using System.Linq;
 
 namespace XSMP
 {
@@ -25,6 +26,14 @@ namespace XSMP
             RESTServer restServer = new RESTServer(apiController);            
 
             IsRunning = true;
+
+            //args handling
+            if(args.Contains("-rebuild"))
+            {                
+                mediaDatabase.StartRebuild();
+            }
+
+            //TODO -flushcache
 
             while(IsRunning)
             {

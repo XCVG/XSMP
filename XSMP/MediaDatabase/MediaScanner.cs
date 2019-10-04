@@ -12,6 +12,10 @@ using System.Threading;
 
 namespace XSMP.MediaDatabase
 {
+
+    /// <summary>
+    /// Class that handles scanning for media
+    /// </summary>
     static class MediaScanner
     {
 
