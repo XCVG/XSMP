@@ -26,6 +26,8 @@ namespace XSMP.ApiSurface
             MediaDatabase = mediaDatabase;
         }
 
+        #region Meta Methods
+
         [APIMethod(Mapping = "meta/status", Verb = HttpVerb.GET)]
         private APIResponse GetSystemStatus(APIRequest request)
         {
@@ -98,6 +100,25 @@ namespace XSMP.ApiSurface
             throw new NotImplementedException();
         }
 
+        #endregion
+
+        #region Library Methods
+
+        [APIMethod(Mapping = "library/song/", Verb = HttpVerb.GET)]
+        private APIResponse GetSong(APIRequest request)
+        {
+            //TODO handle transcode request
+
+            var song = MediaDatabase.GetSong(request.Segment);
+            object responseData = song.HasValue ? new { song = song.Value } : null;
+
+            return new APIResponse(JsonConvert.SerializeObject(new { data = responseData }));
+        }
+
+        #endregion
+
+        #region Test Methods
+
         //below are test methods
 
         [APIMethod(Mapping = "meta/status", Verb = HttpVerb.POST)]
@@ -131,6 +152,8 @@ namespace XSMP.ApiSurface
         {
             return new APIResponse(JsonConvert.SerializeObject(new { status = "test", description = "Hit \"static\"" }));
         }
+
+        #endregion
 
     }
 

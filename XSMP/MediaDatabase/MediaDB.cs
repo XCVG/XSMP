@@ -151,6 +151,15 @@ namespace XSMP.MediaDatabase
         }
 
         //TODO querying
+
+        public PublicModels.Song? GetSong(string hash)
+        {
+            var song = DBContext.Song.Find(hash);
+            if (song == null)
+                return null;
+
+            return PublicModels.Song.FromDBObject(song, DBContext);
+        }
         
     }
 }
