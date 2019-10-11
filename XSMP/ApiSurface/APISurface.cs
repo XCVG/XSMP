@@ -148,6 +148,37 @@ namespace XSMP.ApiSurface
             return new APIResponse(JsonConvert.SerializeObject(new { data = responseData }));
         }
 
+        [APIMethod(Mapping = "library/album", Verb = HttpVerb.GET)]
+        private APIResponse GetAlbums(APIRequest request)
+        {
+            var albums = MediaDatabase.GetAlbums();
+            object responseData = albums.Count > 0 ? new { albums = albums } : null;
+
+            return new APIResponse(JsonConvert.SerializeObject(new { data = responseData }));
+        }
+
+        [APIMethod(Mapping = "library/album/", Verb = HttpVerb.GET)]
+        private APIResponse GetAlbum(APIRequest request)
+        {
+            var album = MediaDatabase.GetAlbum(request.Segment);
+            Dictionary<string, object> responseData = null;
+            if(album.HasValue)
+            {
+                responseData = new Dictionary<string, object>();
+                responseData.Add("album", album.Value);
+
+                //handle list song option
+                if(request.Params.ContainsKey("list"))
+                {
+                    var listOptions = APIUtils.SplitCSVList(request.Params["list"]);
+                    if (listOptions.Contains("songs"))
+                        responseData.Add("songs", MediaDatabase.GetAlbumSongs(request.Segment));
+                }
+            }
+
+            return new APIResponse(JsonConvert.SerializeObject(new { data = responseData }));
+        }
+
         #endregion
 
         #region Test Methods

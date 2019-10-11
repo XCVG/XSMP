@@ -42,5 +42,14 @@ namespace XSMP.MediaDatabase
             return result;
         }
 
+        /// <summary>
+        /// Splits an album's composite canonical name (artist_album)
+        /// </summary>
+        public static (string artist, string album) SplitAlbumCName(string cname)
+        {
+            var split = cname.Split('_');
+            return (split[0], split[1]);
+        }
+
     }
 }

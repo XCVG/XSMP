@@ -188,6 +188,7 @@ namespace XSMP.MediaDatabase
             ThrowIfNotReady();
 
             var artists = from artist in DBContext.Artist
+                          orderby artist.Name ascending
                           select PublicModels.Artist.FromDBObject(artist);
 
             return artists.ToList();
@@ -199,6 +200,7 @@ namespace XSMP.MediaDatabase
 
             var rawAlbums = from album in DBContext.Album
                             where album.ArtistName == cname
+                            orderby album.Name ascending
                             select album;
             var albums = rawAlbums.ToArray().Select(a => PublicModels.Album.FromDBObject(a, DBContext));
 
@@ -221,7 +223,50 @@ namespace XSMP.MediaDatabase
             return songs.ToList();
         }
 
-        
-        
+        public PublicModels.Album? GetAlbum(string cname)
+        {
+            ThrowIfNotReady();
+
+            var (artistCName, albumCName) = MediaUtils.SplitAlbumCName(cname);
+            var rawAlbums = from album in DBContext.Album
+                            where album.ArtistName == artistCName && album.Name == albumCName
+                            orderby album.Name ascending
+                            select album;
+
+            var rawAlbumArray = rawAlbums.ToArray();
+            if (rawAlbumArray.Length > 0)
+                return PublicModels.Album.FromDBObject(rawAlbumArray[0], DBContext);
+
+            return null;
+        }
+
+        public IReadOnlyList<PublicModels.Album> GetAlbums()
+        {
+            ThrowIfNotReady();
+
+            var rawAlbums = from album in DBContext.Album
+                            orderby album.ArtistName ascending, album.Name ascending
+                            select album;
+
+            var albums = rawAlbums.ToArray().Select(a => PublicModels.Album.FromDBObject(a, DBContext));
+
+            return albums.ToList();
+        }
+
+        public IReadOnlyList<PublicModels.Song> GetAlbumSongs(string cname)
+        {
+            ThrowIfNotReady();
+
+            var (artistCName, albumCName) = MediaUtils.SplitAlbumCName(cname);
+            var rawSongs = from song in DBContext.Song
+                           where song.AlbumArtistName == artistCName && song.AlbumName == albumCName
+                           orderby song.Track ascending
+                           select song;
+
+            var songs = rawSongs.ToArray().Select(s => PublicModels.Song.FromDBObject(s, DBContext));
+
+            return songs.ToList();
+        }
+
     }
 }
