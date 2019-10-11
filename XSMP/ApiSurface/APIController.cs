@@ -62,7 +62,10 @@ namespace XSMP.ApiSurface
             string requestVerb = request.HttpMethod;
 
             //split strings, find matching method, and call
-            string[] urlSegments = request.RawUrl.Trim().Split('/', StringSplitOptions.RemoveEmptyEntries); //that will probably bite me later
+            string rawUrl = request.RawUrl.Trim();
+            if(rawUrl.Contains('?'))
+                rawUrl = rawUrl.Substring(0, rawUrl.IndexOf('?'));
+            string[] urlSegments = rawUrl.Split('/', StringSplitOptions.RemoveEmptyEntries); //that will probably bite me later
 
             //discard the first segment
             urlSegments = urlSegments.Skip(1).ToArray();

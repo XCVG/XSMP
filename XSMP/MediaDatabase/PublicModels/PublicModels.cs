@@ -17,6 +17,12 @@ namespace XSMP.MediaDatabase.PublicModels
             Title = title;
             Artist = artist;
         }
+
+        public static Album FromDBObject(Models.Album album, Models.mediadbContext dbContext)
+        {
+            var artist = Artist.FromDBObject(dbContext.Artist.Where(a => a.Name == album.ArtistName).First());            
+            return new Album(album.Name, album.Title, artist);
+        }
     }
 
     public readonly struct Artist
@@ -28,6 +34,11 @@ namespace XSMP.MediaDatabase.PublicModels
         {
             Name = name;
             NiceName = niceName;
+        }
+
+        public static Artist FromDBObject(Models.Artist artist)
+        {
+            return new Artist(artist.Name, artist.NiceName);
         }
     }
 
@@ -41,7 +52,7 @@ namespace XSMP.MediaDatabase.PublicModels
         public readonly Album? Album;
         public readonly IReadOnlyList<Artist> Artists;
 
-        private Song(string hash, string title, int track, int set, string genre, Album? album, IEnumerable<Artist> artists)
+        internal Song(string hash, string title, int track, int set, string genre, Album? album, IEnumerable<Artist> artists)
         {
             Hash = hash;
             Title = title;

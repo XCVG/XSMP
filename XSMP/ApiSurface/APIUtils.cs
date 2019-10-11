@@ -38,6 +38,20 @@ namespace XSMP.ApiSurface
             stream.Close();
         }
 
+        /// <summary>
+        /// Splits a list of comma-separated values, handling the cases of one or no values
+        /// </summary>
+        /// <remarks>Doesn't yet properly handle escaped commas</remarks>
+        internal static string[] SplitCSVList(string csvList)
+        {
+            if (string.IsNullOrEmpty(csvList))
+                return new string[] { };
+            else if (!csvList.Contains(','))
+                return new string[] { csvList };
+
+            return csvList.Split(',');
+        }
+
         //TODO add a decode string method
     }
 }

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -84,6 +85,7 @@ namespace XSMP.MediaDatabase
         public void StartRebuild()
         {
             IsRebuilding = true;
+            State = MediaDBState.Loading;
 
             Console.WriteLine($"[MediaDB] Starting media database rebuild!");
 
@@ -94,7 +96,8 @@ namespace XSMP.MediaDatabase
             DeleteDatabaseFile();
             CreateDatabaseFile();
             OpenDatabase();
-
+            
+            IsRebuilding = false;
             StartMediaScan();
         }
 
@@ -150,16 +153,75 @@ namespace XSMP.MediaDatabase
 
         }
 
-        //TODO querying
+        private void ThrowIfNotReady()
+        {
+            if (State != MediaDBState.Ready)
+                throw new MediaDBNotReadyException();
+        }
+
+        //WIP querying
 
         public PublicModels.Song? GetSong(string hash)
         {
+            ThrowIfNotReady();
+
             var song = DBContext.Song.Find(hash);
             if (song == null)
                 return null;
 
             return PublicModels.Song.FromDBObject(song, DBContext);
         }
+
+        public PublicModels.Artist? GetArtist(string cname)
+        {
+            ThrowIfNotReady();
+
+            var artist = DBContext.Artist.Find(cname);
+            if (artist == null)
+                return null;
+
+            return PublicModels.Artist.FromDBObject(artist);
+        }
+
+        public IReadOnlyList<PublicModels.Artist> GetArtists()
+        {
+            ThrowIfNotReady();
+
+            var artists = from artist in DBContext.Artist
+                          select PublicModels.Artist.FromDBObject(artist);
+
+            return artists.ToList();
+        }
+
+        public IReadOnlyList<PublicModels.Album> GetArtistAlbums(string cname)
+        {
+            ThrowIfNotReady();
+
+            var rawAlbums = from album in DBContext.Album
+                            where album.ArtistName == cname
+                            select album;
+            var albums = rawAlbums.ToArray().Select(a => PublicModels.Album.FromDBObject(a, DBContext));
+
+            return albums.ToList();
+        }
+
+        public IReadOnlyList<PublicModels.Song> GetArtistSongs(string cname)
+        {
+            ThrowIfNotReady();
+
+            var rawSongs = from artistSong in DBContext.ArtistSong
+                        where artistSong.ArtistName == cname
+                        join song in DBContext.Song on artistSong.SongHash equals song.Hash
+                        orderby song.AlbumName ascending, song.Track ascending
+                        select song;
+
+            //ToArray is to execute the query
+            var songs = rawSongs.ToArray().Select(s => PublicModels.Song.FromDBObject(s, DBContext));
+
+            return songs.ToList();
+        }
+
+        
         
     }
 }

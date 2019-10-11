@@ -240,10 +240,15 @@ namespace XSMP.MediaDatabase
             //do we want to scrub names at this point? no, I think we need the full ones
             string title = string.IsNullOrEmpty(tags.Title) ? Path.GetFileNameWithoutExtension(songPath) : tags.Title;
             int track = (int)tags.Track;
-            int set = (int)tags.Disc; //TODO handle 1/1 = 0
+            int set = (int)tags.Disc; //WIP handle 1/1 = 0
             if (set == 1 && tags.DiscCount == 1)
                 set = 0;
+
+            //handle comma'd genre tags
             string genre = string.IsNullOrEmpty(tags.FirstGenre) ? null : tags.FirstGenre;
+            if (genre != null && genre.Contains(','))
+                genre = genre.Substring(0, genre.IndexOf(','));
+
             //string artist = string.IsNullOrEmpty(tags.FirstPerformer) ? null : tags.FirstPerformer;
             bool hasArtists = (tags.Performers != null && tags.Performers.Length > 0);
             var artists = hasArtists ? new List<string>(tags.Performers) : new List<string>() { "Unknown"};
