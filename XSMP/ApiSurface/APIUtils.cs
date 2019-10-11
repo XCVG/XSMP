@@ -37,5 +37,7 @@ namespace XSMP.ApiSurface
             stream.Write(buffer, 0, buffer.Length);
             stream.Close();
         }
+
+        //TODO add a decode string method
     }
 }

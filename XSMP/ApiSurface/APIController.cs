@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Net.Http;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
@@ -115,12 +116,14 @@ namespace XSMP.ApiSurface
                 mapping = sortedMappings.First().Key;
             }
 
-            //get segment and body
+            //get segment and body, parse query string
             string segment = mapping.Segments.Length < numSegments ? string.Join('/', urlSegments.Skip(mapping.Segments.Length)) : string.Empty;
             string body = request.GetBody();
+            var parameters = request.Url.ParseQueryString();
+            Dictionary<string, string> parametersDict = parameters.AllKeys.ToDictionary(k => k, k => parameters[k]);
 
             //call method
-            APIRequest apiRequest = new APIRequest(request.RawUrl, segment, body);
+            APIRequest apiRequest = new APIRequest(request.RawUrl, segment, body, parametersDict);
 
             if (typeof(Task<APIResponse>).IsAssignableFrom(mapping.Method.ReturnType))
             {

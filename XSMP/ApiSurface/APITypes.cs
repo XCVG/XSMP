@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Net;
 using System.Net.Http;
 using System.Text;
@@ -28,12 +29,14 @@ namespace XSMP.ApiSurface
         public readonly string Url;
         public readonly string Segment;
         public readonly string Body;
+        public readonly IReadOnlyDictionary<string, string> Params;
 
-        public APIRequest(string url, string segment, string body)
+        public APIRequest(string url, string segment, string body, IDictionary<string, string> parameters)
         {
             Url = url;
             Segment = segment;
             Body = body;
+            Params = (IReadOnlyDictionary<string, string>)parameters?.ToImmutableDictionary() ?? new Dictionary<string, string>();
         }
     }
 
