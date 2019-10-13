@@ -52,6 +52,12 @@ namespace XSMP.ApiSurface
             return csvList.Split(',');
         }
 
-        //TODO add a decode string method
+        /// <summary>
+        /// Decodes/unescapes a URL string
+        /// </summary>
+        internal static string DecodeUrlDataString(string urlDataString)
+        {
+            return Uri.UnescapeDataString(urlDataString);
+        }
     }
 }

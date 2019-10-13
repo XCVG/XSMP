@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.IO;
 using System.Text;
 
 namespace XSMP.MediaDatabase
@@ -49,6 +50,49 @@ namespace XSMP.MediaDatabase
         {
             var split = cname.Split('_');
             return (split[0], split[1]);
+        }
+
+        /// <summary>
+        /// Gets the first part of a path
+        /// </summary>
+        public static string GetFirstPathElement(string path)
+        {
+            var segs = path.Split(new char[] { '/', '\\' }, StringSplitOptions.RemoveEmptyEntries);
+            return segs[0];
+        }
+
+        /// <summary>
+        /// Replaces the first part of a path
+        /// </summary>
+        public static string ReplaceFirstPathElement(string path, string newElement)
+        {
+            //trim the leading slash if it exists
+            path = path.TrimStart(new char[] { '/', '\\' });
+            if (path.Contains('/') || path.Contains('\\'))
+            {
+                int idx = GetFirstPathSeparator(path);
+                string pathPart = path.Substring(idx).TrimStart(new char[] { '/', '\\' }); //off-by-one? hacked around
+                return Path.Combine(newElement, pathPart);
+            }
+            else
+            {
+                //special case: path only has the starting element
+                return newElement;
+            }
+        }
+
+        private static int GetFirstPathSeparator(string path)
+        {
+            int slashIndex = path.IndexOf('/');
+            int backslashIndex = path.IndexOf('\\');
+            if (slashIndex >= 0 && backslashIndex >= 0)
+                return Math.Min(slashIndex, backslashIndex);
+            else if (slashIndex >= 0)
+                return slashIndex;
+            else if (backslashIndex >= 0)
+                return backslashIndex;
+            else
+                return -1;
         }
 
     }

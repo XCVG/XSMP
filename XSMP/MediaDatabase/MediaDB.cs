@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -23,10 +25,14 @@ namespace XSMP.MediaDatabase
         private Task ScannerTask;
         private CancellationTokenSource ScannerTokenSource;
 
+        private Dictionary<string, string> MediaFolderUniquePaths;
+
         private string DatabasePath => Path.Combine(Config.LocalDataFolderPath, "mediadb.sqlite");
 
         public MediaDB()
         {
+            SetupMediaFolderUniquePaths();
+
             //copy initial mediadb if it doesn't exist
 
             CreateDatabaseFile();
@@ -159,6 +165,60 @@ namespace XSMP.MediaDatabase
                 throw new MediaDBNotReadyException();
         }
 
+        private void SetupMediaFolderUniquePaths()
+        {
+            var mediaFolders = UserConfig.Instance.MediaFolders;
+
+            //find which last path segments are used more than once
+            List<string> reusedFinalPathSegments = new List<string>();
+            List<string> usedFinalPathSegments = new List<string>();
+            foreach(var path in mediaFolders)
+            {
+                string finalPathSegment = new DirectoryInfo(path).Name;
+                if (usedFinalPathSegments.Contains(finalPathSegment))
+                    reusedFinalPathSegments.Add(finalPathSegment);
+                usedFinalPathSegments.Add(finalPathSegment);
+            }
+
+            //split into two lists
+            List<string> pathsWithReusedFinalSegment = new List<string>();
+            List<string> pathsWithoutReusedFinalSegment = new List<string>();
+            foreach(var path in mediaFolders)
+            {
+                string finalPathSegment = new DirectoryInfo(path).Name;
+                if (reusedFinalPathSegments.Contains(finalPathSegment))
+                    pathsWithReusedFinalSegment.Add(path);
+                else
+                    pathsWithoutReusedFinalSegment.Add(path);
+            }
+
+            MediaFolderUniquePaths = new Dictionary<string, string>();
+
+            //without reused final segment: add as-is
+            foreach (var path in pathsWithoutReusedFinalSegment)
+            {
+                string finalPathSegment = new DirectoryInfo(path).Name;
+                MediaFolderUniquePaths.Add(finalPathSegment, path);
+            }
+
+            //with reused final segment: add with a number
+            foreach(var finalSegment in reusedFinalPathSegments)
+            {
+                int number = 1;
+                foreach(var path in pathsWithReusedFinalSegment)
+                {
+                    string finalPathSegment = new DirectoryInfo(path).Name;
+                    if(finalPathSegment == finalSegment)
+                    {
+                        MediaFolderUniquePaths.Add($"{finalPathSegment} ({number})", path);
+                        number++;
+                    }
+                }
+            }
+
+            Console.WriteLine($"[MediaDB] Media Folder Unique Paths: [{string.Join(',', MediaFolderUniquePaths.Keys)}]");
+        }
+
         //WIP querying
 
         public PublicModels.Song? GetSong(string hash)
@@ -266,6 +326,81 @@ namespace XSMP.MediaDatabase
             var songs = rawSongs.ToArray().Select(s => PublicModels.Song.FromDBObject(s, DBContext));
 
             return songs.ToList();
+        }
+
+        /// <summary>
+        /// Gets a list of root media folders
+        /// </summary>
+        public IReadOnlyList<string> GetRootFolders()
+        {
+            ThrowIfNotReady();
+
+            return MediaFolderUniquePaths.Keys.ToImmutableArray();
+        }
+
+        /// <summary>
+        /// Gets if a media folder exists and is valid
+        /// </summary>
+        public bool GetFolderExists(string folderPath)
+        {
+            ThrowIfNotReady();
+
+            //so the idea is:
+            //check if the first segment matches one of our root paths. Fail if it doesn't. Replace with real path if it does
+            string firstPathPart = MediaUtils.GetFirstPathElement(folderPath);
+            if (!MediaFolderUniquePaths.ContainsKey(firstPathPart))
+                return false;
+            //check if the real path exists on disk. Success if it does
+            string realPath = MediaUtils.ReplaceFirstPathElement(folderPath, MediaFolderUniquePaths[firstPathPart]);
+            if (Directory.Exists(realPath))
+                return true;
+
+            return false;
+        }
+        
+        /// <summary>
+        /// Gets a list of subfolders within a media folder
+        /// </summary>
+        public IReadOnlyList<string> GetFoldersInFolder(string folderPath)
+        {
+            ThrowIfNotReady();
+
+            string firstPathPart = MediaUtils.GetFirstPathElement(folderPath);
+            string realPath = MediaUtils.ReplaceFirstPathElement(folderPath, MediaFolderUniquePaths[firstPathPart]);
+
+            return Directory.EnumerateDirectories(realPath).Select(d => new DirectoryInfo(d).Name).ToImmutableArray();
+        }
+
+        /// <summary>
+        /// Gets a list of songs in a folder, non-recursive
+        /// </summary>
+        public IReadOnlyList<PublicModels.Song> GetSongsInFolder(string folderPath)
+        {
+            ThrowIfNotReady();
+
+            SHA1 sha1 = SHA1.Create();
+
+            string firstPathPart = MediaUtils.GetFirstPathElement(folderPath);
+            string realPath = MediaUtils.ReplaceFirstPathElement(folderPath, MediaFolderUniquePaths[firstPathPart]);
+
+            var files = Directory.EnumerateFiles(realPath);
+
+            List<PublicModels.Song> songs = new List<PublicModels.Song>();
+            foreach(var file in files)
+            {
+                var hashBytes = sha1.ComputeHash(File.ReadAllBytes(file));
+                string hash = HashUtils.BytesToHexString(hashBytes);
+
+                var rawSong = DBContext.Song.Find(hash);
+                if(rawSong != null)
+                {
+                    var song = PublicModels.Song.FromDBObject(rawSong, DBContext);
+                    songs.Add(song);
+                }
+            }
+
+            return songs;
+
         }
 
     }

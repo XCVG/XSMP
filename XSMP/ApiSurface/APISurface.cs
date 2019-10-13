@@ -179,6 +179,30 @@ namespace XSMP.ApiSurface
             return new APIResponse(JsonConvert.SerializeObject(new { data = responseData }));
         }
 
+        [APIMethod(Mapping = "library/folder", Verb = HttpVerb.GET)]
+        private APIResponse GetFolders(APIRequest request)
+        {
+            var responseData = new { folders = MediaDatabase.GetRootFolders() };
+
+            return new APIResponse(JsonConvert.SerializeObject(new { data = responseData }));
+        }
+
+        [APIMethod(Mapping = "library/folder/", Verb = HttpVerb.GET)]
+        private APIResponse GetFolder(APIRequest request)
+        {
+            string folderPath = APIUtils.DecodeUrlDataString(request.Segment);
+            Dictionary<string, object> responseData = null;
+            if (MediaDatabase.GetFolderExists(folderPath))
+            {
+                responseData = new Dictionary<string, object>();
+                responseData.Add("path", folderPath);
+                responseData.Add("folders", MediaDatabase.GetFoldersInFolder(folderPath));
+                responseData.Add("songs", MediaDatabase.GetSongsInFolder(folderPath));
+            }
+
+            return new APIResponse(JsonConvert.SerializeObject(new { data = responseData }));
+        }
+
         #endregion
 
         #region Test Methods
