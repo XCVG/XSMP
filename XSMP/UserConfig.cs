@@ -17,6 +17,9 @@ namespace XSMP
         [JsonProperty]
         public List<string> MediaFolders { get; set; } = new List<string>();
 
+        [JsonProperty]
+        public bool EnableStacktrace { get; set; } = true;
+
         #endregion
 
         #region Instance Handling

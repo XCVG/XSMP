@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Net;
+using System.Reflection;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using XSMP.ApiSurface;
+using XSMP.MediaDatabase;
 
 namespace XSMP.RestServer
 {
@@ -69,8 +71,16 @@ namespace XSMP.RestServer
             }
             catch (Exception e)
             {
-                int statusCode = GetStatusCodeForError(e);
-                string result = JsonConvert.SerializeObject(new Error(statusCode, "API", e.GetType().Name, e.Message));
+                Exception reportedException;
+                if (e is TargetInvocationException)
+                    reportedException = e.InnerException;
+                else
+                    reportedException = e;
+
+                int statusCode = GetStatusCodeForError(reportedException);
+                string result = JsonConvert.SerializeObject(
+                    new Error(statusCode, "API", reportedException.GetType().Name, reportedException.Message,
+                    UserConfig.Instance.EnableStacktrace ? reportedException.StackTrace : string.Empty));
                 Console.WriteLine(result);
                 response.StatusCode = statusCode;
                 response.WriteResponse(result);
@@ -91,6 +101,8 @@ namespace XSMP.RestServer
                     return 418;
                 case TimeoutException _:
                     return 524;
+                case MediaDBNotReadyException _:
+                    return 503;
                 default:
                     return (int)HttpStatusCode.InternalServerError;
             }

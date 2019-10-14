@@ -18,13 +18,16 @@ namespace XSMP.RestServer
         public readonly string Title;
         [JsonProperty(PropertyName = "detail")]
         public readonly string Detail;
+        [JsonProperty(PropertyName = "stacktrace")]
+        public readonly string Stacktrace;
 
-        public Error(int status, string source, string title, string detail)
+        public Error(int status, string source, string title, string detail, string stacktrace)
         {
             Status = status;
             Source = source;
             Title = title;
             Detail = detail;
+            Stacktrace = stacktrace;
         }
     }
 

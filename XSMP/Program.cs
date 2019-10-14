@@ -91,7 +91,7 @@ namespace XSMP
 
         private static void LoadUserConfig()
         {
-            //TODO load user config
+            //load user config
             if(File.Exists(Config.UserConfigPath))
             {
                 UserConfig.Load(Config.UserConfigPath);

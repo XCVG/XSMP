@@ -120,6 +120,7 @@ namespace XSMP.ApiSurface
             }
 
             //get segment and body, parse query string
+            //TODO handle POST params?
             string segment = mapping.Segments.Length < numSegments ? string.Join('/', urlSegments.Skip(mapping.Segments.Length)) : string.Empty;
             string body = request.GetBody();
             var parameters = request.Url.ParseQueryString();

@@ -104,6 +104,8 @@ namespace XSMP.ApiSurface
 
         #region Library Methods
 
+        //TODO better exceptions/error messages
+
         [APIMethod(Mapping = "library/song/", Verb = HttpVerb.GET)]
         private APIResponse GetSong(APIRequest request)
         {
@@ -199,6 +201,27 @@ namespace XSMP.ApiSurface
                 responseData.Add("folders", MediaDatabase.GetFoldersInFolder(folderPath));
                 responseData.Add("songs", MediaDatabase.GetSongsInFolder(folderPath));
             }
+
+            return new APIResponse(JsonConvert.SerializeObject(new { data = responseData }));
+        }
+
+        [APIMethod(Mapping = "library/search", Verb = HttpVerb.GET)]
+        private APIResponse GetSearch(APIRequest request)
+        {
+            string keyword = request.Params["keyword"];
+
+            Dictionary<string, object> responseData = new Dictionary<string, object>();
+            string[] listOptions = APIUtils.SplitCSVList(request.Params["list"]);
+
+            //run searches
+            if (listOptions.Contains("songs"))
+                responseData.Add("songs", MediaDatabase.FindSongsByName(keyword));
+            if (listOptions.Contains("albums"))
+                responseData.Add("albums", MediaDatabase.FindAlbumsByName(keyword));
+            if (listOptions.Contains("artists"))
+                responseData.Add("artists", MediaDatabase.FindArtistsByName(keyword));
+            if (listOptions.Contains("folders"))
+                throw new NotImplementedException(); //planned, not implemented yet
 
             return new APIResponse(JsonConvert.SerializeObject(new { data = responseData }));
         }

@@ -403,5 +403,50 @@ namespace XSMP.MediaDatabase
 
         }
 
+        /// <summary>
+        /// Gets a list of songs matching a keyword
+        /// </summary>
+        public IReadOnlyList<PublicModels.Song> FindSongsByName(string keyword)
+        {
+            ThrowIfNotReady();
+
+            var rawSongs = from song in DBContext.Song
+                           where song.Title.Contains(keyword, StringComparison.InvariantCultureIgnoreCase)
+                           orderby song.Title
+                           select song;
+
+            return rawSongs.ToArray().Select(s => PublicModels.Song.FromDBObject(s, DBContext)).ToArray();
+        }
+
+        /// <summary>
+        /// Gets a list of albums matching a keyword
+        /// </summary>
+        public IReadOnlyList<PublicModels.Album> FindAlbumsByName(string keyword)
+        {
+            ThrowIfNotReady();
+
+            var rawAlbums = from album in DBContext.Album
+                            where album.Title.Contains(keyword, StringComparison.InvariantCultureIgnoreCase)
+                            orderby album.Title
+                            select album;
+
+            return rawAlbums.ToArray().Select(a => PublicModels.Album.FromDBObject(a, DBContext)).ToArray();
+        }
+
+        /// <summary>
+        /// Gets a list of artists matching a keyword
+        /// </summary>
+        public IReadOnlyList<PublicModels.Artist> FindArtistsByName(string keyword)
+        {
+            ThrowIfNotReady();
+
+            var rawArtists = from artist in DBContext.Artist
+                             where artist.NiceName.Contains(keyword, StringComparison.InvariantCultureIgnoreCase)
+                             orderby artist.NiceName
+                             select artist;
+
+            return rawArtists.ToArray().Select(a => PublicModels.Artist.FromDBObject(a)).ToArray();
+        }
+
     }
 }
