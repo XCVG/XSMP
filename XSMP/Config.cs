@@ -24,6 +24,7 @@ namespace XSMP
         public static string LocalDataFolderPath => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), CompanyFolder, "XSMP", "v" + ProductVersion.Major.ToString());
         public static string CacheFolderPath => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), CompanyFolder, "MediaCache");
         public static string UserConfigPath => Path.Combine(LocalDataFolderPath, "config.json");
+        public static string PlaylistPath => Path.Combine(DataFolderPath, "playlists");
 
         //product/version info
         public static string ProductName { get; } = "XCVG Systems Media Provider";

@@ -1,6 +1,9 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
@@ -26,6 +29,8 @@ namespace XSMP.MediaDatabase
         private CancellationTokenSource ScannerTokenSource;
 
         private Dictionary<string, string> MediaFolderUniquePaths;
+
+        private Dictionary<string, Playlist> Playlists;
 
         private string DatabasePath => Path.Combine(Config.LocalDataFolderPath, "mediadb.sqlite");
 
@@ -152,17 +157,30 @@ namespace XSMP.MediaDatabase
                 }
             }
 
+            try
+            {
+                LoadPlaylists(token);
+            }
+            catch(Exception ex)
+            {
+                if (ex is TaskCanceledException || ex is OperationCanceledException)
+                {
+                    Console.WriteLine("[MediaDB] Playlist loading aborted!");
+                    State = MediaDBState.Loading;
+                }
+                else
+                {
+                    Console.Error.WriteLine("[MediaDB] Playlist loading failed!");
+                    Console.Error.WriteLine(ex);
+                    State = MediaDBState.Error;
+                }
+            }
+
             //needed? safe?
             IsRebuilding = false;
             ScannerTask = null;
             ScannerTokenSource = null;
 
-        }
-
-        private void ThrowIfNotReady()
-        {
-            if (State != MediaDBState.Ready)
-                throw new MediaDBNotReadyException();
         }
 
         private void SetupMediaFolderUniquePaths()
@@ -217,6 +235,49 @@ namespace XSMP.MediaDatabase
             }
 
             Console.WriteLine($"[MediaDB] Media Folder Unique Paths: [{string.Join(',', MediaFolderUniquePaths.Keys)}]");
+        }
+
+        private void LoadPlaylists(CancellationToken cancellationToken)
+        {
+            Stopwatch sw = Stopwatch.StartNew();
+
+            //ensure folder exists
+            if (!Directory.Exists(Config.PlaylistPath))
+                Directory.CreateDirectory(Config.PlaylistPath);
+
+            //load playlists
+            Playlists = new Dictionary<string, Playlist>();
+            int playlistsLoaded = 0, errors = 0;
+            foreach(var file in Directory.EnumerateFiles(Config.PlaylistPath))
+            {
+                try
+                {
+                    if (!Path.GetExtension(file).Equals(".json", StringComparison.OrdinalIgnoreCase))
+                        continue;
+
+                    var playlist = JsonConvert.DeserializeObject<Playlist>(File.ReadAllText(file));
+                    if (playlist != null)
+                    {
+                        Playlists.Add(Path.GetFileNameWithoutExtension(file), playlist);
+                        playlistsLoaded++;
+                    }
+                }
+                catch(Exception ex)
+                {
+                    Console.WriteLine($"[MediaDB] Failed to load playlist \"{file}\" ({ex.GetType()}: {ex.Message})");
+                    errors++;
+                }
+            }
+
+            sw.Stop();
+
+            Console.WriteLine($"[MediaDB] Loaded {playlistsLoaded} playlists from {Config.PlaylistPath} ({sw.Elapsed.TotalSeconds:F2}s, {errors} errors)");
+        }
+
+        private void ThrowIfNotReady()
+        {
+            if (State != MediaDBState.Ready)
+                throw new MediaDBNotReadyException();
         }
 
         //WIP querying
@@ -447,6 +508,47 @@ namespace XSMP.MediaDatabase
 
             return rawArtists.ToArray().Select(a => PublicModels.Artist.FromDBObject(a)).ToArray();
         }
+
+        /// <summary>
+        /// Gets a playlist by its cname
+        /// </summary>
+        public Playlist GetPlaylist(string cname)
+        {
+            ThrowIfNotReady();
+
+            if (Playlists.ContainsKey(cname))
+                return Playlists[cname];
+
+            return null;
+        }
+
+        /// <summary>
+        /// Inserts or updates a playlist
+        /// </summary>
+        public void SetPlaylist(string cname, Playlist playlist)
+        {
+            ThrowIfNotReady();
+
+            Playlists[cname] = playlist;
+            var serializedPlaylist = JsonConvert.SerializeObject(playlist);
+            File.WriteAllText(Path.Combine(Config.PlaylistPath, cname), serializedPlaylist);
+        }
+
+        /// <summary>
+        /// Deletes a playlist
+        /// </summary>
+        public void DeletePlaylist(string cname)
+        {
+            ThrowIfNotReady();
+
+            //TODO throw appropriate exception on not found
+
+            Playlists.Remove(cname);
+            File.Delete(Path.Combine(Config.PlaylistPath, cname));
+
+        }
+
+
 
     }
 }
