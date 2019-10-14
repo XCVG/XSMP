@@ -181,6 +181,40 @@ namespace XSMP.ApiSurface
             return new APIResponse(JsonConvert.SerializeObject(new { data = responseData }));
         }
 
+        [APIMethod(Mapping = "library/playlist/", Verb = HttpVerb.GET)]
+        private APIResponse GetPlaylist(APIRequest request)
+        {
+            var cname = APIUtils.DecodeUrlDataString(request.Segment);
+            var playlist = MediaDatabase.GetPlaylist(cname);
+
+            //TODO throw on null
+
+            return new APIResponse(JsonConvert.SerializeObject(new { data = playlist }));
+        }
+
+        [APIMethod(Mapping = "library/playlist/", Verb = HttpVerb.PUT)]
+        private APIResponse PutPlaylist(APIRequest request)
+        {
+            var cname = APIUtils.DecodeUrlDataString(request.Segment);
+            var playlist = JsonConvert.DeserializeObject<Playlist>(request.Body);
+
+            MediaDatabase.SetPlaylist(cname, playlist);
+
+            return new APIResponse(string.Empty);
+        }
+
+        [APIMethod(Mapping = "library/playlist/", Verb = HttpVerb.DELETE)]
+        private APIResponse DeletePlaylist(APIRequest request)
+        {
+            var cname = APIUtils.DecodeUrlDataString(request.Segment);
+
+            MediaDatabase.DeletePlaylist(cname);
+
+            //TODO throw on null
+
+            return new APIResponse(string.Empty);
+        }
+
         [APIMethod(Mapping = "library/folder", Verb = HttpVerb.GET)]
         private APIResponse GetFolders(APIRequest request)
         {

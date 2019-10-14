@@ -529,9 +529,11 @@ namespace XSMP.MediaDatabase
         {
             ThrowIfNotReady();
 
+            //TODO input validation?
+
             Playlists[cname] = playlist;
             var serializedPlaylist = JsonConvert.SerializeObject(playlist);
-            File.WriteAllText(Path.Combine(Config.PlaylistPath, cname), serializedPlaylist);
+            File.WriteAllText(Path.Combine(Config.PlaylistPath, cname + ".json"), serializedPlaylist);
         }
 
         /// <summary>
@@ -544,7 +546,7 @@ namespace XSMP.MediaDatabase
             //TODO throw appropriate exception on not found
 
             Playlists.Remove(cname);
-            File.Delete(Path.Combine(Config.PlaylistPath, cname));
+            File.Delete(Path.Combine(Config.PlaylistPath, cname + ".json"));
 
         }
 
