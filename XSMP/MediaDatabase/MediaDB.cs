@@ -510,6 +510,16 @@ namespace XSMP.MediaDatabase
         }
 
         /// <summary>
+        /// Gets a list of all playlists (simplified objects)
+        /// </summary>
+        public IReadOnlyList<PublicModels.Playlist> GetPlaylists()
+        {
+            ThrowIfNotReady();
+
+            return Playlists.Select(kvp => PublicModels.Playlist.FromPlaylistObject(kvp.Key, kvp.Value)).ToArray();
+        }
+
+        /// <summary>
         /// Gets a playlist by its cname
         /// </summary>
         public Playlist GetPlaylist(string cname)

@@ -61,4 +61,9 @@ namespace XSMP.ApiSurface
             return $"{Body}\n({StatusCode})";
         }
     }
+
+    public class ResourceNotFoundException : Exception
+    {
+        public override string Message => "The resource does not exist";
+    }
 }

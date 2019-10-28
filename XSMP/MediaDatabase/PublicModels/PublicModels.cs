@@ -82,4 +82,23 @@ namespace XSMP.MediaDatabase.PublicModels
             return new Song(dbSong.Hash, dbSong.Title, (int)dbSong.Track, set, dbSong.Genre, resultAlbum, artists);
         }
     }
+
+    public readonly struct Playlist
+    {
+        public readonly string Name;
+        public readonly string NiceName;
+        public readonly string Description;
+
+        internal Playlist(string name, string niceName, string description)
+        {
+            Name = name;
+            NiceName = niceName;
+            Description = description;
+        }
+
+        public static Playlist FromPlaylistObject(string name, MediaDatabase.Playlist playlist)
+        {
+            return new Playlist(name, playlist.NiceName, playlist.Description);
+        }
+    }
 }

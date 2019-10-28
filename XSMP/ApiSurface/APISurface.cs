@@ -181,13 +181,23 @@ namespace XSMP.ApiSurface
             return new APIResponse(JsonConvert.SerializeObject(new { data = responseData }));
         }
 
+        [APIMethod(Mapping = "library/playlist", Verb = HttpVerb.GET)]
+        private APIResponse GetPlaylists(APIRequest request)
+        {
+            var playlists = MediaDatabase.GetPlaylists();
+            object responseData = playlists.Count > 0 ? new { playlists = playlists } : null;
+
+            return new APIResponse(JsonConvert.SerializeObject(new { data = responseData }));
+        }
+
         [APIMethod(Mapping = "library/playlist/", Verb = HttpVerb.GET)]
         private APIResponse GetPlaylist(APIRequest request)
         {
             var cname = APIUtils.DecodeUrlDataString(request.Segment);
             var playlist = MediaDatabase.GetPlaylist(cname);
 
-            //TODO throw on null
+            if (MediaDatabase.GetPlaylist(cname) == null)
+                throw new ResourceNotFoundException();
 
             return new APIResponse(JsonConvert.SerializeObject(new { data = playlist }));
         }
@@ -198,9 +208,11 @@ namespace XSMP.ApiSurface
             var cname = APIUtils.DecodeUrlDataString(request.Segment);
             var playlist = JsonConvert.DeserializeObject<Playlist>(request.Body);
 
+            //TODO return different status codes: 201 for a new playlist, 204 for an update (?)
+
             MediaDatabase.SetPlaylist(cname, playlist);
 
-            return new APIResponse(string.Empty);
+            return new APIResponse(string.Empty, (int)HttpStatusCode.Created);
         }
 
         [APIMethod(Mapping = "library/playlist/", Verb = HttpVerb.DELETE)]
@@ -208,11 +220,12 @@ namespace XSMP.ApiSurface
         {
             var cname = APIUtils.DecodeUrlDataString(request.Segment);
 
+            if (MediaDatabase.GetPlaylist(cname) == null)
+                throw new ResourceNotFoundException();
+
             MediaDatabase.DeletePlaylist(cname);
 
-            //TODO throw on null
-
-            return new APIResponse(string.Empty);
+            return new APIResponse(string.Empty, (int)HttpStatusCode.NoContent);
         }
 
         [APIMethod(Mapping = "library/folder", Verb = HttpVerb.GET)]
@@ -234,6 +247,10 @@ namespace XSMP.ApiSurface
                 responseData.Add("path", folderPath);
                 responseData.Add("folders", MediaDatabase.GetFoldersInFolder(folderPath));
                 responseData.Add("songs", MediaDatabase.GetSongsInFolder(folderPath));
+            }
+            else
+            {
+                throw new ResourceNotFoundException();
             }
 
             return new APIResponse(JsonConvert.SerializeObject(new { data = responseData }));

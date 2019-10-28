@@ -57,7 +57,8 @@ namespace XSMP.RestServer
         /// </summary>
         private async Task HandleRequestAsync(HttpListenerContext context)
         {
-            Console.WriteLine(context.Request.Url);
+            if(UserConfig.Instance.EnableRequestLogging)
+                Console.WriteLine(context.Request.Url);
 
             var response = context.Response;
             response.ContentType = "application/json";
@@ -65,7 +66,8 @@ namespace XSMP.RestServer
             try
             {
                 APIResponse result = await Api.Call(context.Request);
-                Console.WriteLine(result);
+                if (UserConfig.Instance.EnableRequestLogging)
+                    Console.WriteLine(result);
                 response.StatusCode = result.StatusCode;
                 response.WriteResponse(result.Body);
             }
@@ -77,11 +79,14 @@ namespace XSMP.RestServer
                 else
                     reportedException = e;
 
+                Console.Error.WriteLine($"Error processing request ({e.GetType().Name}: {e.Message})");
+
                 int statusCode = GetStatusCodeForError(reportedException);
                 string result = JsonConvert.SerializeObject(
                     new Error(statusCode, "API", reportedException.GetType().Name, reportedException.Message,
                     UserConfig.Instance.EnableStacktrace ? reportedException.StackTrace : string.Empty));
-                Console.WriteLine(result);
+                if (UserConfig.Instance.EnableRequestLogging)
+                    Console.WriteLine(result);
                 response.StatusCode = statusCode;
                 response.WriteResponse(result);
             }
@@ -102,7 +107,9 @@ namespace XSMP.RestServer
                 case TimeoutException _:
                     return 524;
                 case MediaDBNotReadyException _:
-                    return 503;
+                    return (int)HttpStatusCode.ServiceUnavailable;
+                case ResourceNotFoundException _:
+                    return (int)HttpStatusCode.NotFound;
                 default:
                     return (int)HttpStatusCode.InternalServerError;
             }

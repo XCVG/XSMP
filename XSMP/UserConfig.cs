@@ -20,6 +20,9 @@ namespace XSMP
         [JsonProperty]
         public bool EnableStacktrace { get; set; } = true;
 
+        [JsonProperty]
+        public bool EnableRequestLogging { get; set; } = true;
+
         #endregion
 
         #region Instance Handling
