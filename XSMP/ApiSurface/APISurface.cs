@@ -202,6 +202,14 @@ namespace XSMP.ApiSurface
             return new APIResponse(JsonConvert.SerializeObject(new { data = playlist }));
         }
 
+        [APIMethod(Mapping = "library/playlist_unique_name", Verb = HttpVerb.POST)]
+        private APIResponse GetPlaylistUniqueName(APIRequest request)
+        {
+            var name = request.Body;
+            var uname = MediaDatabase.GetPlaylistUniqueName(name);
+            return new APIResponse(JsonConvert.SerializeObject(new { data = uname }));
+        }
+
         [APIMethod(Mapping = "library/playlist/", Verb = HttpVerb.PUT)]
         private APIResponse PutPlaylist(APIRequest request)
         {

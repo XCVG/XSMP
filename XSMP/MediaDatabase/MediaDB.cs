@@ -533,6 +533,44 @@ namespace XSMP.MediaDatabase
         }
 
         /// <summary>
+        /// Gets a unique cname for a (new) playlist
+        /// </summary>
+        public string GetPlaylistUniqueName(string name)
+        {
+            ThrowIfNotReady();
+
+            var cname = MediaUtils.GetCanonicalName(name);
+
+            //easy case: cname does not exist in playlist list
+            if (!Playlists.Keys.Contains(cname))
+                return cname;
+            else
+            {
+                //contains at least one partial match
+                int highestNumber = 0;
+                foreach(var key in Playlists.Keys)
+                {
+                    if (key.StartsWith(cname))
+                    {
+                        var ks = key.Split('_');
+                        if (ks.Length > 1)
+                        {
+                            int keyNumber = int.Parse(ks[1]);
+                            if (keyNumber > highestNumber)
+                                highestNumber = keyNumber;
+                        }
+
+                    }
+                }
+
+                var newNumber = highestNumber + 1;
+
+                return $"{cname}_{newNumber}";
+            }
+
+        }
+
+        /// <summary>
         /// Inserts or updates a playlist
         /// </summary>
         public void SetPlaylist(string cname, Playlist playlist)

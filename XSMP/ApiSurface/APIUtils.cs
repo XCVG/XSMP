@@ -15,7 +15,7 @@ namespace XSMP.ApiSurface
         public static string GetBody(this HttpListenerRequest request)
         {
             string body = null;
-            using (var sr = new StreamReader(request.InputStream))
+            using (var sr = new StreamReader(request.InputStream, Encoding.UTF8))
             {
                 body = sr.ReadToEnd();
             }
