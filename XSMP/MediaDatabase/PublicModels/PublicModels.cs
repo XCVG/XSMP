@@ -81,7 +81,7 @@ namespace XSMP.MediaDatabase.PublicModels
 
             var resultAlbum = albums.Count() > 0 ? albums.First() : (Album?)null;
 
-            return new Song(dbSong.Hash, dbSong.Title, 0f, (int)dbSong.Track, set, dbSong.Genre, resultAlbum, artists);
+            return new Song(dbSong.Hash, dbSong.Title, (float)dbSong.Length, (int)dbSong.Track, set, dbSong.Genre, resultAlbum, artists);
         }
     }
 

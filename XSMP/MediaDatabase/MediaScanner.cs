@@ -24,6 +24,7 @@ namespace XSMP.MediaDatabase
         {
             public string Hash { get; set; }
             public string Title { get; set; }
+            public double Length { get; set; }
             public long Track { get; set; }
             public long Set { get; set; }
             public string Genre { get; set; }
@@ -236,6 +237,7 @@ namespace XSMP.MediaDatabase
             var tags = tagFile.Tag;
 
             //Console.WriteLine(tagFile.Properties.Duration);
+            double length = tagFile.Properties.Duration.TotalSeconds;
 
             //expect NULL or ZERO if the tag does not exists
 
@@ -259,7 +261,7 @@ namespace XSMP.MediaDatabase
             string albumArtist = string.IsNullOrEmpty(tags.FirstAlbumArtist) ? (hasArtists ? artists[0] : null) : tags.FirstAlbumArtist;
             string album = string.IsNullOrEmpty(tags.Album) ? null : tags.Album;
 
-            return new SongInfo() { Hash = hash, Title = title, Track = track, Set = set, Genre = genre,
+            return new SongInfo() { Hash = hash, Title = title, Length = length, Track = track, Set = set, Genre = genre,
                 Path = songPath, Artists = artists, AlbumName = album, AlbumArtistName = albumArtist };
         }
 
@@ -322,6 +324,7 @@ namespace XSMP.MediaDatabase
                 Hash = song.Hash,
                 Title = song.Title,
                 Genre = genreCName,
+                Length = song.Length,
                 Set = song.Set,
                 Track = song.Track,
                 Path = song.Path,
@@ -338,11 +341,9 @@ namespace XSMP.MediaDatabase
             }
         }
 
-        //will the below break on delete?
-        //no, but it doesn't work at all
         private static void ScrubAlbumTable(mediadbContext dbContext)
         {
-            //not quite right; need to handle composite key properly
+            //should be fixed now
 
             var albums = dbContext.Album;
             foreach (var album in albums)

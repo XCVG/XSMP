@@ -22,6 +22,7 @@ namespace XSMP.MediaDatabase.Models
         public string Path { get; set; }
         public string AlbumName { get; set; }
         public string AlbumArtistName { get; set; }
+        public double Length { get; set; }
 
         [ForeignKey("AlbumName,AlbumArtistName")]
         [InverseProperty("Song")]
