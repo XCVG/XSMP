@@ -235,6 +235,8 @@ namespace XSMP.MediaDatabase
             var tagFile = TagLib.File.Create(songPath);
             var tags = tagFile.Tag;
 
+            //Console.WriteLine(tagFile.Properties.Duration);
+
             //expect NULL or ZERO if the tag does not exists
 
             //do we want to scrub names at this point? no, I think we need the full ones
@@ -244,10 +246,12 @@ namespace XSMP.MediaDatabase
             if (set == 1 && tags.DiscCount == 1)
                 set = 0;
 
-            //handle comma'd genre tags
+            //handle comma'd and slash'd genre tags
             string genre = string.IsNullOrEmpty(tags.FirstGenre) ? null : tags.FirstGenre;
             if (genre != null && genre.Contains(','))
                 genre = genre.Substring(0, genre.IndexOf(','));
+            if (genre != null && genre.Contains('/')) //not sure if this is exactly what we want since it *is* ambiguous
+                genre = genre.Substring(0, genre.IndexOf('/'));
 
             //string artist = string.IsNullOrEmpty(tags.FirstPerformer) ? null : tags.FirstPerformer;
             bool hasArtists = (tags.Performers != null && tags.Performers.Length > 0);

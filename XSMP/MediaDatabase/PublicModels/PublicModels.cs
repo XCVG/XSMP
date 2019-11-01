@@ -46,16 +46,18 @@ namespace XSMP.MediaDatabase.PublicModels
     {
         public readonly string Hash;
         public readonly string Title;
+        public readonly float Length;
         public readonly int Track;
         public readonly int Set;
         public readonly string Genre;
         public readonly Album? Album;
         public readonly IReadOnlyList<Artist> Artists;
 
-        internal Song(string hash, string title, int track, int set, string genre, Album? album, IEnumerable<Artist> artists)
+        internal Song(string hash, string title, float length, int track, int set, string genre, Album? album, IEnumerable<Artist> artists)
         {
             Hash = hash;
             Title = title;
+            Length = length;
             Track = track;
             Set = set;
             Genre = genre;
@@ -79,7 +81,7 @@ namespace XSMP.MediaDatabase.PublicModels
 
             var resultAlbum = albums.Count() > 0 ? albums.First() : (Album?)null;
 
-            return new Song(dbSong.Hash, dbSong.Title, (int)dbSong.Track, set, dbSong.Genre, resultAlbum, artists);
+            return new Song(dbSong.Hash, dbSong.Title, 0f, (int)dbSong.Track, set, dbSong.Genre, resultAlbum, artists);
         }
     }
 
