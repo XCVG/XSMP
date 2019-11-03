@@ -23,6 +23,9 @@ namespace XSMP
         [JsonProperty]
         public bool EnableRequestLogging { get; set; } = true;
 
+        [JsonProperty]
+        public float MaximumCacheSize { get; set; } = 1024; 
+
         #endregion
 
         #region Instance Handling

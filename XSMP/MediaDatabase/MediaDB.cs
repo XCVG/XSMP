@@ -293,6 +293,17 @@ namespace XSMP.MediaDatabase
             return PublicModels.Song.FromDBObject(song, DBContext);
         }
 
+        public string GetSongPath(string hash)
+        {
+            ThrowIfNotReady();
+
+            var song = DBContext.Song.Find(hash);
+            if (song == null)
+                return null;
+
+            return song.Path;
+        }
+
         public PublicModels.Artist? GetArtist(string cname)
         {
             ThrowIfNotReady();

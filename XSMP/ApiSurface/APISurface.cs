@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -107,13 +108,51 @@ namespace XSMP.ApiSurface
         //TODO better exceptions/error messages
 
         [APIMethod(Mapping = "library/song/", Verb = HttpVerb.GET)]
-        private APIResponse GetSong(APIRequest request)
+        private async Task<APIResponse> GetSong(APIRequest request)
         {
-            //TODO handle transcode request
-
             var song = MediaDatabase.GetSong(request.Segment);
-            object responseData = song.HasValue ? new { song = song.Value } : null;
+            var responseData = song.HasValue ? new Dictionary<string, object>() { { "song", song } } : null;
 
+            //handle transcode request
+            if (song != null && request.Params != null && request.Params.ContainsKey("transcode"))
+            {
+                string sourceFilePath = MediaDatabase.GetSongPath(request.Segment);
+                string transcodedFilePath = null;
+
+                if(request.Params["transcode"] == "wave")
+                {
+                    transcodedFilePath = await MediaTranscoder.GetFromCacheOrTranscodeAsync(request.Segment, sourceFilePath);                 
+                }
+                else
+                {
+                    throw new NotImplementedException(); //we may support other formats later, but not today
+                }
+
+                if (!request.Params.ContainsKey("return") || request.Params["return"] == "path")
+                {
+                    responseData.Add("transcodedPath", transcodedFilePath);
+                }
+                else
+                {
+                    if (request.Params["return"] == "field")
+                    {
+                        byte[] data = File.ReadAllBytes(transcodedFilePath);
+                        responseData.Add("transcodedData", data);
+                    }
+                    else if (request.Params["return"] == "body")
+                    {
+                        //TODO return data in the response body
+                        //I think we need to rework some of the infrastructure for this to work
+                        throw new NotImplementedException();
+                    }
+                    else
+                    {
+                        throw new NotImplementedException();
+                    }
+                }
+
+            }
+            
             return new APIResponse(JsonConvert.SerializeObject(new { data = responseData }));
         }
 
