@@ -130,6 +130,7 @@ namespace XSMP.MediaDatabase
 
             int scanRetryCount = 0;
 
+            //run media scan
             while (State != MediaDBState.Ready && scanRetryCount < Config.MediaScannerRetryCount)
             {
                 try
@@ -157,6 +158,7 @@ namespace XSMP.MediaDatabase
                 }
             }
 
+            //load playlists
             try
             {
                 LoadPlaylists(token);
@@ -174,6 +176,16 @@ namespace XSMP.MediaDatabase
                     Console.Error.WriteLine(ex);
                     State = MediaDBState.Error;
                 }
+            }
+
+            //trim cache
+            try
+            {
+                MediaTranscoder.TrimCache();
+            }
+            catch(Exception ex)
+            {
+                Console.Error.WriteLine("[MediaDB] Media cache trim failed!");
             }
 
             //needed? safe?

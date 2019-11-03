@@ -7,6 +7,8 @@ using System.Threading.Tasks;
 
 namespace XSMP.MediaDatabase
 {
+
+    //really not happy with how this is set up
     public static class MediaTranscoder
     {
         //very hacky, we'll clean this up later
@@ -67,7 +69,7 @@ namespace XSMP.MediaDatabase
         /// Cleans up the media cache
         /// </summary>
         /// <returns></returns>
-        public static async Task TrimCache()
+        public static void TrimCache()
         {
             //nop for now, TODO impl
 
@@ -77,7 +79,7 @@ namespace XSMP.MediaDatabase
         /// <summary>
         /// Clears the media cache entirely
         /// </summary>
-        public static async Task FlushCache()
+        public static void FlushCache()
         {
             var files = Directory.EnumerateFiles(Config.CacheFolderPath);
             foreach(var file in files)
@@ -91,6 +93,8 @@ namespace XSMP.MediaDatabase
                     Console.Error.WriteLine($"[MediaTranscoder] Failed to delete file \"{file}\" ({e.GetType().Name}: {e.Message})");
                 }
             }
+
+            Console.WriteLine($"[MediaTranscoder] Flushed media cache");
         }
 
     }

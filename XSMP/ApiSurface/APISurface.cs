@@ -98,7 +98,9 @@ namespace XSMP.ApiSurface
         [APIMethod(Mapping = "meta/flushcache", Verb = HttpVerb.POST)]
         private APIResponse PostFlushCache(APIRequest request)
         {
-            throw new NotImplementedException();
+            MediaTranscoder.FlushCache();
+
+            return new APIResponse(JsonConvert.SerializeObject(new { description = "Media cache flushed" }));
         }
 
         #endregion
