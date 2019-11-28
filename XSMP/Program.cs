@@ -95,6 +95,7 @@ namespace XSMP
             if(File.Exists(Config.UserConfigPath))
             {
                 UserConfig.Load(Config.UserConfigPath);
+                UserConfig.Save(Config.UserConfigPath);
                 Console.WriteLine("Loaded user config from " + Config.UserConfigPath);
             }
             else

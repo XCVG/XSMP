@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -71,9 +72,43 @@ namespace XSMP.MediaDatabase
         /// <returns></returns>
         public static void TrimCache()
         {
-            //nop for now, TODO impl
+            if (UserConfig.Instance.MaximumCacheSize < 0)
+                return; //no cache size limit
 
             //enumerate files, sort by access date, delete enough to get under the cache limit
+
+            var files = Directory.EnumerateFiles(Config.CacheFolderPath);
+            var sortedFiles = files.OrderBy(f => File.GetLastAccessTime(f));
+
+            IList<string> filesList = sortedFiles.ToList();
+
+            if (filesList.Count == 0)
+                return;
+
+            float totalSize = 0; //float because close enough is close enough
+
+            foreach(var file in filesList)
+            {
+                totalSize += new FileInfo(file).Length / 1000000f;
+            }
+
+            while(totalSize > UserConfig.Instance.MaximumCacheSize && filesList.Count > 0)
+            {
+                string file = filesList[filesList.Count - 1];
+                filesList.RemoveAt(filesList.Count - 1);
+
+                try
+                {
+                    float fileSize = new FileInfo(file).Length / 1000000f;
+                    File.Delete(file);
+                    totalSize -= fileSize;
+                }
+                catch (Exception e)
+                {
+                    Console.Error.WriteLine($"[MediaTranscoder] Failed to delete file \"{file}\" ({e.GetType().Name}: {e.Message})");
+                }
+            }
+
         }
 
         /// <summary>
