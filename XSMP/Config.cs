@@ -10,14 +10,6 @@ namespace XSMP
     /// </summary>
     public static class Config
     {
-        //net config
-        public static string Hostname { get; } = "localhost";
-        public static int Port { get; } = 1547;
-        public static string UrlPrefix => $"http://{Hostname}:{Port}/";
-
-        //media config
-        public static IReadOnlyList<string> MediaFileExtensions => new string[] { ".mp3", ".ogg", ".oga", ".flac", ".wav", ".m4a" }; //TODO figure out all the things
-
         //paths
         public static string CompanyFolder { get; } = "XCVG Systems";
         public static string DataFolderPath => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), CompanyFolder, "XSMP", "v" + ProductVersion.Major.ToString());

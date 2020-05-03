@@ -57,7 +57,7 @@ namespace XSMP.MediaDatabase
                 foreach (string filePath in GetFiles(libraryFolder))
                 {
                     string extension = Path.GetExtension(filePath);
-                    if (!Config.MediaFileExtensions.Contains(extension))
+                    if (!UserConfig.Instance.MediaFileExtensions.Contains(extension, StringComparer.OrdinalIgnoreCase))
                         continue;
 
                     try

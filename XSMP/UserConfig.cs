@@ -15,22 +15,24 @@ namespace XSMP
         #region Actual Data
 
         [JsonProperty]
-        public static string Hostname { get; set; } = "localhost";
+        public static string Hostname { get; private set; } = "localhost";
         [JsonProperty]
-        public static int Port { get; set; } = 1547;
+        public static int Port { get; private set; } = 1547;
 
         [JsonProperty]
-        public bool UseSystemMusicFolder { get; set; } = true;
+        public bool UseSystemMusicFolder { get; private set; } = true;
         [JsonProperty]
-        public List<string> OtherMediaFolders { get; set; } = new List<string>();
+        public IReadOnlyList<string> OtherMediaFolders { get; private set; } = new List<string>();
+        [JsonProperty]
+        public IReadOnlyList<string> MediaFileExtensions { get; private set; } = new string[] { ".mp3", ".ogg", ".oga", ".flac", ".wav", ".m4a" };
 
         [JsonProperty]
-        public bool EnableStacktrace { get; set; } = true;
+        public bool EnableStacktrace { get; private set; } = true;
         [JsonProperty]
-        public bool EnableRequestLogging { get; set; } = true;
+        public bool EnableRequestLogging { get; private set; } = true;
 
         [JsonProperty]
-        public float MaximumCacheSize { get; set; } = 1024;
+        public float MaximumCacheSize { get; private set; } = 1024;
 
         #endregion
 
@@ -39,6 +41,7 @@ namespace XSMP
         /// <summary>
         /// All media folders to scan, including system media folder if enabled
         /// </summary>
+        [JsonIgnore]
         public IList<string> MediaFolders
         {
             get
@@ -57,6 +60,7 @@ namespace XSMP
         /// <summary>
         /// The URL prefix to use for the server
         /// </summary>
+        [JsonIgnore]
         public string UrlPrefix => $"http://{Hostname}:{Port}/";
 
         #endregion
@@ -99,7 +103,7 @@ namespace XSMP
         /// </summary>
         public static void Save(string configPath)
         {
-            string configString = JsonConvert.SerializeObject(Instance); //note use of public getter
+            string configString = JsonConvert.SerializeObject(Instance, Formatting.Indented); //note use of public getter
             File.WriteAllText(configPath, configString);
         }
 
