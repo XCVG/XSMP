@@ -20,10 +20,10 @@ namespace XSMP.RestServer
         {
             Api = apiController;
 
-            Console.WriteLine($"[RESTServer] Starting listener on {Config.UrlPrefix}");
+            Console.WriteLine($"[RESTServer] Starting listener on {UserConfig.Instance.UrlPrefix}");
 
             Listener = new HttpListener();
-            Listener.Prefixes.Add(Config.UrlPrefix);
+            Listener.Prefixes.Add(UserConfig.Instance.UrlPrefix);
             Listener.Start();
 
             //I found out there was a native TPL version immediately after writing this

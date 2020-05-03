@@ -15,16 +15,49 @@ namespace XSMP
         #region Actual Data
 
         [JsonProperty]
-        public List<string> MediaFolders { get; set; } = new List<string>();
+        public static string Hostname { get; set; } = "localhost";
+        [JsonProperty]
+        public static int Port { get; set; } = 1547;
+
+        [JsonProperty]
+        public bool UseSystemMusicFolder { get; set; } = true;
+        [JsonProperty]
+        public List<string> OtherMediaFolders { get; set; } = new List<string>();
 
         [JsonProperty]
         public bool EnableStacktrace { get; set; } = true;
-
         [JsonProperty]
         public bool EnableRequestLogging { get; set; } = true;
 
         [JsonProperty]
-        public float MaximumCacheSize { get; set; } = 1024; 
+        public float MaximumCacheSize { get; set; } = 1024;
+
+        #endregion
+
+        #region Complex Properties
+
+        /// <summary>
+        /// All media folders to scan, including system media folder if enabled
+        /// </summary>
+        public IList<string> MediaFolders
+        {
+            get
+            {
+
+                List<string> mediaFolders = new List<string>(OtherMediaFolders.Count + 1);
+                if (UseSystemMusicFolder)
+                {
+                    mediaFolders.Add(Environment.GetFolderPath(Environment.SpecialFolder.MyMusic));
+                }
+                mediaFolders.AddRange(OtherMediaFolders);
+                return mediaFolders;
+            }
+        }
+
+        /// <summary>
+        /// The URL prefix to use for the server
+        /// </summary>
+        public string UrlPrefix => $"http://{Hostname}:{Port}/";
 
         #endregion
 
@@ -69,7 +102,7 @@ namespace XSMP
             string configString = JsonConvert.SerializeObject(Instance); //note use of public getter
             File.WriteAllText(configPath, configString);
         }
-        
+
         #endregion
     }
 }

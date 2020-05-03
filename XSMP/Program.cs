@@ -33,7 +33,10 @@ namespace XSMP
                 mediaDatabase.StartRebuild();
             }
 
-            //TODO -flushcache
+            if(args.Contains("-flushcache"))
+            {
+                MediaTranscoder.FlushCache();
+            }
 
             while(IsRunning)
             {
