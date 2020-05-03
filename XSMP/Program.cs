@@ -17,6 +17,7 @@ namespace XSMP
             Console.WriteLine($"Starting {ProductNameString}");
 
             AppDomain.CurrentDomain.ProcessExit += new EventHandler(HandleExternalExit);
+            AppDomain.CurrentDomain.UnhandledException += new UnhandledExceptionEventHandler(HandleUnhandledException);
 
             SetupFolders();
             LoadUserConfig();
@@ -115,6 +116,14 @@ namespace XSMP
             Console.WriteLine("Exit signal received!");
 
             IsRunning = false;
+        }
+
+        //that's a funny method name
+        private static void HandleUnhandledException(object sender, UnhandledExceptionEventArgs args)
+        {
+            Exception e = (Exception)args.ExceptionObject;
+            Console.WriteLine($"Fatal error: {e.GetType().Name}");
+            Console.WriteLine(e);
         }
 
         public static string ProductNameString => $"{Config.ProductName} v{Config.ProductVersion} \"{Config.VersionCodename}\" (API v{Config.APIVersion})";
