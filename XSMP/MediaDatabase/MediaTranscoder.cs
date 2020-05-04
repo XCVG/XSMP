@@ -14,16 +14,35 @@ namespace XSMP.MediaDatabase
     {
         //very hacky, we'll clean this up later
 
-        private const string commandLine = "-i \"{0}\" -flags:a +bitexact -map_metadata -1 -acodec pcm_s16le -ar 44100 -ac 2 \"{1}\"";
+        private const string waveCommandLine = "-i \"{0}\" -flags:a +bitexact -map_metadata -1 -acodec pcm_s16le -ar 44100 -ac 2 \"{1}\"";
+        private const string vorbisCommandLine = "-i \"{0}\" -c:a libvorbis -qscale:a 5 -ar 44100 -ac 2 \"{1}\"";
 
         /// <summary>
         /// Transcodes a music file
         /// </summary>
         /// <returns>The path of the transcoded file</returns>
-        public static async Task<string> GetFromCacheOrTranscodeAsync(string hash, string path) //TODO transcode options
+        public static async Task<string> GetFromCacheOrTranscodeAsync(string hash, string path, TranscodeFormat format)
         {
+            string commandLine;
+            string extension;
+            switch (format)
+            {
+                case TranscodeFormat.Wave:
+                    commandLine = waveCommandLine;
+                    extension = "wav";
+                    break;
+                case TranscodeFormat.Vorbis:
+                    commandLine = vorbisCommandLine;
+                    extension = "ogg";
+                    break;
+                //case TranscodeFormat.MP3:
+                //    break;
+                default:
+                    throw new NotSupportedException($"Specified format \"{format}\" is not supported for transcoding");
+            }
+
             string encodedHash = HashUtils.HexStringToBase64String(hash);
-            string targetPath = Path.GetFullPath(Path.Combine(Config.CacheFolderPath, $"{encodedHash}.wav"));
+            string targetPath = Path.GetFullPath(Path.Combine(Config.CacheFolderPath, $"{encodedHash}.{extension}"));
 
             if (File.Exists(targetPath))
             {
@@ -89,7 +108,7 @@ namespace XSMP.MediaDatabase
 
             foreach(var file in filesList)
             {
-                totalSize += new FileInfo(file).Length / 1000000f;
+                totalSize += new FileInfo(file).Length / 1000000f; //we want size in MB
             }
 
             while(totalSize > UserConfig.Instance.MaximumCacheSize && filesList.Count > 0)
@@ -144,5 +163,30 @@ namespace XSMP.MediaDatabase
         }
 
         public override string Message => "An error occurred in the transcoding process";
+    }
+
+    public enum TranscodeFormat
+    {
+        Undefined, Wave, Vorbis, MP3, Flac
+    }
+
+    public static class TranscodeFormatExtensions
+    {
+        public static string GetContentType(this TranscodeFormat format)
+        {
+            switch (format)
+            {
+                case TranscodeFormat.Wave:
+                    return "audio/wav";
+                case TranscodeFormat.Vorbis:
+                    return "audio/ogg";
+                case TranscodeFormat.MP3:
+                    return "audio/mpeg";
+                case TranscodeFormat.Flac:
+                    return "audio/flac";
+                default:
+                    return "application/octet-stream";
+            }
+        }
     }
 }

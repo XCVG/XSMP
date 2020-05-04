@@ -60,16 +60,25 @@ namespace XSMP.RestServer
             if(UserConfig.Instance.EnableRequestLogging)
                 Console.WriteLine(context.Request.Url);
 
-            var response = context.Response;
-            response.ContentType = "application/json";
+            var response = context.Response;            
 
             try
             {
                 APIResponse result = await Api.Call(context.Request);
                 if (UserConfig.Instance.EnableRequestLogging)
                     Console.WriteLine(result);
+                response.ContentType = result.ContentType;
                 response.StatusCode = result.StatusCode;
-                response.WriteResponse(result.Body);
+                if (result.RawBody != null)
+                {
+                    var stream = response.OutputStream;
+                    stream.Write(result.RawBody, 0, result.RawBody.Length);
+                    stream.Close();
+                }
+                else
+                {
+                    response.WriteResponse(result.Body);
+                }
             }
             catch (Exception e)
             {
@@ -87,6 +96,7 @@ namespace XSMP.RestServer
                     UserConfig.Instance.EnableStacktrace ? reportedException.StackTrace : string.Empty));
                 if (UserConfig.Instance.EnableRequestLogging)
                     Console.WriteLine(result);
+                response.ContentType = "application/json";
                 response.StatusCode = statusCode;
                 response.WriteResponse(result);
             }

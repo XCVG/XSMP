@@ -44,16 +44,25 @@ namespace XSMP.ApiSurface
     {
         public readonly string Body;
         public readonly int StatusCode;
+        public readonly string ContentType;
+        public readonly byte[] RawBody;
 
-        public APIResponse(string body) : this(body, (int)HttpStatusCode.OK)
+        public APIResponse(string body) : this(body, (int)HttpStatusCode.OK, "application/json", null)
         {
 
         }
 
-        public APIResponse(string body, int statusCode)
+        public APIResponse(string body, int statusCode) : this(body, statusCode, "application/json", null)
         {
-            StatusCode = statusCode;
+
+        }
+
+        public APIResponse(string body, int statusCode, string contentType, byte[] rawBody)
+        {
             Body = body;
+            StatusCode = statusCode;            
+            ContentType = contentType;
+            RawBody = rawBody;
         }
 
         public override string ToString()

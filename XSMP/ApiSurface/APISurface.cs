@@ -120,14 +120,19 @@ namespace XSMP.ApiSurface
             {
                 string sourceFilePath = MediaDatabase.GetSongPath(request.Segment);
                 string transcodedFilePath = null;
+                TranscodeFormat format = TranscodeFormat.Undefined; ;
 
-                if(request.Params["transcode"] == "wave")
+                if (request.Params.ContainsKey("transcode"))
                 {
-                    transcodedFilePath = await MediaTranscoder.GetFromCacheOrTranscodeAsync(request.Segment, sourceFilePath);                 
-                }
-                else
-                {
-                    throw new NotImplementedException(); //we may support other formats later, but not today
+                    if(Enum.TryParse<TranscodeFormat>(request.Params["transcode"], true, out format))
+                    {
+                        transcodedFilePath = await MediaTranscoder.GetFromCacheOrTranscodeAsync(request.Segment, sourceFilePath, format);
+                    }
+                    else
+                    {
+                        throw new NotSupportedException($"Transcode format \"{request.Params["transcode"]}\" is not recognized!");
+                    }
+
                 }
 
                 if (!request.Params.ContainsKey("return") || request.Params["return"] == "path")
@@ -143,9 +148,8 @@ namespace XSMP.ApiSurface
                     }
                     else if (request.Params["return"] == "body")
                     {
-                        //TODO return data in the response body
-                        //I think we need to rework some of the infrastructure for this to work
-                        throw new NotImplementedException();
+                        byte[] data = File.ReadAllBytes(transcodedFilePath);
+                        return new APIResponse(null, (int)HttpStatusCode.OK, format.GetContentType(), data);
                     }
                     else
                     {
