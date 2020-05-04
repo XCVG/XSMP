@@ -533,6 +533,70 @@ namespace XSMP.MediaDatabase
         }
 
         /// <summary>
+        /// Gets a list of folders matching a keyword
+        /// </summary>
+        public IReadOnlyList<string> FindFoldersByName(string keyword)
+        {
+            //horrifying block magic and I don't know why I did that
+
+            List<string> folders = new List<string>();
+
+            //get all folders
+            {
+                {
+                    var rootFolders = GetRootFolders();
+                    foreach (var rootFolder in rootFolders)
+                    {
+                        getFolders(rootFolder);
+                    }
+                }
+
+                void getFolders(string rootFolder)
+                {
+                    var subFolders = GetFoldersInFolder(rootFolder);
+                    if (subFolders != null && subFolders.Count > 0)                    
+                    {
+                        foreach(var subFolder in subFolders)
+                        {
+                            getFolders(Path.Combine(rootFolder, subFolder));
+                        }
+                    }
+
+                    folders.Add(rootFolder);
+
+                }
+            }
+
+            //search!
+            {
+                List<string> resultFolders = new List<string>();
+
+                //Console.WriteLine(string.Join(',', folders));
+                //Console.WriteLine(string.Join(',', folders.Select(x => new DirectoryInfo(x).Name)));
+
+                foreach(var folder in folders)
+                {
+                    string folderName = new DirectoryInfo(folder).Name;
+                    if(folderName.Contains(keyword, StringComparison.InvariantCultureIgnoreCase))
+                    {
+                        resultFolders.Add(folder);
+                    }
+                }
+
+                return resultFolders;
+            }
+                        
+        }
+
+        /// <summary>
+        /// Gets a list of playlists matching a keyword
+        /// </summary>
+        public IReadOnlyList<PublicModels.Playlist> FindPlaylistsByName(string keyword)
+        {
+            return Playlists.Where(kvp => kvp.Key.Contains(keyword, StringComparison.InvariantCultureIgnoreCase)).Select(kvp => PublicModels.Playlist.FromPlaylistObject(kvp.Key, kvp.Value)).ToArray();
+        }
+
+        /// <summary>
         /// Gets a list of all playlists (simplified objects)
         /// </summary>
         public IReadOnlyList<PublicModels.Playlist> GetPlaylists()

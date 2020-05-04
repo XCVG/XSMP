@@ -248,7 +248,7 @@ namespace XSMP.ApiSurface
         }
 
         [APIMethod(Mapping = "library/playlist_unique_name", Verb = HttpVerb.POST)]
-        private APIResponse GetPlaylistUniqueName(APIRequest request)
+        private APIResponse PostPlaylistUniqueName(APIRequest request)
         {
             var name = request.Body;
             var uname = MediaDatabase.GetPlaylistUniqueName(name);
@@ -325,7 +325,9 @@ namespace XSMP.ApiSurface
             if (listOptions.Contains("artists"))
                 responseData.Add("artists", MediaDatabase.FindArtistsByName(keyword));
             if (listOptions.Contains("folders"))
-                throw new NotImplementedException(); //planned, not implemented yet
+                responseData.Add("folders", MediaDatabase.FindFoldersByName(keyword));
+            if (listOptions.Contains("playlists"))
+                responseData.Add("playlists", MediaDatabase.FindPlaylistsByName(keyword));
 
             return new APIResponse(JsonConvert.SerializeObject(new { data = responseData }));
         }
