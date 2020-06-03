@@ -75,4 +75,25 @@ namespace XSMP.ApiSurface
     {
         public override string Message => "The resource does not exist";
     }
+
+    public class ParameterMissingException : Exception
+    {
+        public override string Message => $"A required parameter was not specified ({MissingParameters})";
+        private string MissingParameters;
+
+        public ParameterMissingException()
+        {
+            MissingParameters = "unspecified";
+        }
+
+        public ParameterMissingException(string missingParameters)
+        {
+            MissingParameters = missingParameters;
+        }
+
+        public ParameterMissingException(params string[] missingParameters) : this(string.Join(',', missingParameters))
+        {
+
+        }
+    }
 }

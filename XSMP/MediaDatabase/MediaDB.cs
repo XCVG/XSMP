@@ -509,7 +509,28 @@ namespace XSMP.MediaDatabase
         {
             ThrowIfNotReady();
 
-            throw new NotImplementedException();
+            IQueryable<Song> rawSongs;
+            if (string.IsNullOrEmpty(song))
+                rawSongs = from s in DBContext.Song
+                           select s;
+            else
+                rawSongs = from s in DBContext.Song
+                           where s.Title.Contains(song, StringComparison.InvariantCultureIgnoreCase)
+                           select s;
+
+            if (!string.IsNullOrEmpty(album))
+                rawSongs = from s in rawSongs
+                           where s.Album != null && s.Album.Title.Contains(album, StringComparison.InvariantCultureIgnoreCase)
+                           select s;
+
+            if (!string.IsNullOrEmpty(artist))
+                rawSongs = from s in rawSongs
+                           where s.ArtistSong.Any(a => a.ArtistNameNavigation.NiceName.Contains(artist, StringComparison.InvariantCultureIgnoreCase)) //is this legit? apparently yes
+                           select s;
+
+            rawSongs = rawSongs.OrderBy(s => s.Title);
+
+            return rawSongs.ToArray().Select(s => PublicModels.Song.FromDBObject(s, DBContext)).ToArray();
         }
 
         /// <summary>
@@ -534,7 +555,28 @@ namespace XSMP.MediaDatabase
         {
             ThrowIfNotReady();
 
-            throw new NotImplementedException();
+            IQueryable<Album> rawAlbums;
+            if (string.IsNullOrEmpty(album))
+                rawAlbums = from a in DBContext.Album
+                            select a;
+            else
+                rawAlbums = from a in DBContext.Album
+                            where a.Title.Contains(album, StringComparison.InvariantCultureIgnoreCase)
+                            select a;
+
+            if (!string.IsNullOrEmpty(artist))
+                rawAlbums = from a in rawAlbums
+                            where a.ArtistNameNavigation.NiceName.Contains(artist, StringComparison.InvariantCultureIgnoreCase)
+                            select a;
+
+            if (!string.IsNullOrEmpty(song))
+                rawAlbums = from a in rawAlbums
+                            where a.Song.Any(s => s.Title.Contains(song, StringComparison.InvariantCultureIgnoreCase))
+                            select a;
+
+            rawAlbums = rawAlbums.OrderBy(a => a.Title);
+
+            return rawAlbums.ToArray().Select(a => PublicModels.Album.FromDBObject(a, DBContext)).ToArray();
         }
 
         /// <summary>
@@ -559,7 +601,28 @@ namespace XSMP.MediaDatabase
         {
             ThrowIfNotReady();
 
-            throw new NotImplementedException();
+            IQueryable<Artist> rawArtists;
+            if (string.IsNullOrEmpty(artist))
+                rawArtists = from a in DBContext.Artist
+                             select a;
+            else
+                rawArtists = from a in DBContext.Artist
+                             where a.NiceName.Contains(artist, StringComparison.InvariantCultureIgnoreCase)
+                             select a;
+
+            if (!string.IsNullOrEmpty(album))
+                rawArtists = from a in rawArtists
+                             where a.Album.Any(ab => ab.Title.Contains(album, StringComparison.InvariantCultureIgnoreCase))
+                             select a;
+
+            if (!string.IsNullOrEmpty(song))
+                rawArtists = from a in rawArtists
+                             where a.ArtistSong.Any(sa => sa.SongHashNavigation.Title.Contains(song, StringComparison.InvariantCultureIgnoreCase))
+                             select a;
+
+            rawArtists = rawArtists.OrderBy(a => a.NiceName);
+
+            return rawArtists.ToArray().Select(a => PublicModels.Artist.FromDBObject(a)).ToArray();
         }
 
         /// <summary>

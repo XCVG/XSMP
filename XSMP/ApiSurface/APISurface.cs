@@ -340,6 +340,12 @@ namespace XSMP.ApiSurface
             request.Params.TryGetValue("album", out string album);
             request.Params.TryGetValue("artist", out string artist);
 
+            if(string.IsNullOrEmpty(song) && string.IsNullOrEmpty(album) && string.IsNullOrEmpty(artist))
+                throw new ParameterMissingException();
+
+            if(!request.Params.ContainsKey("list"))
+                throw new ParameterMissingException("list");
+
             Dictionary<string, object> responseData = new Dictionary<string, object>();
             string[] listOptions = APIUtils.SplitCSVList(request.Params["list"]);
 
