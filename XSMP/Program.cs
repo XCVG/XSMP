@@ -126,7 +126,7 @@ namespace XSMP
             Console.WriteLine(e);
         }
 
-        public static string ProductNameString => $"{Config.ProductName} v{Config.ProductVersion} \"{Config.VersionCodename}\" (API v{Config.APIVersion})";
+        public static string ProductNameString => $"{Config.ProductName} v{Config.ProductVersion} \"{Config.VersionCodename}\" (API v{Config.APIVersion}.{Config.APIMinorVersion})";
 
         public static string ProgramFolderPath => Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().Location);
     }

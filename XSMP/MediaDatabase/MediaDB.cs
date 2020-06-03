@@ -503,6 +503,16 @@ namespace XSMP.MediaDatabase
         }
 
         /// <summary>
+        /// Gets a list of songs matching parameters
+        /// </summary>
+        public IReadOnlyList<PublicModels.Song> FindSongsByParameters(string song, string album, string artist)
+        {
+            ThrowIfNotReady();
+
+            throw new NotImplementedException();
+        }
+
+        /// <summary>
         /// Gets a list of albums matching a keyword
         /// </summary>
         public IReadOnlyList<PublicModels.Album> FindAlbumsByName(string keyword)
@@ -518,6 +528,16 @@ namespace XSMP.MediaDatabase
         }
 
         /// <summary>
+        /// Gets a list of albums matching parameters
+        /// </summary>
+        public IReadOnlyList<PublicModels.Album> FindAlbumsByParameters(string song, string album, string artist)
+        {
+            ThrowIfNotReady();
+
+            throw new NotImplementedException();
+        }
+
+        /// <summary>
         /// Gets a list of artists matching a keyword
         /// </summary>
         public IReadOnlyList<PublicModels.Artist> FindArtistsByName(string keyword)
@@ -530,6 +550,16 @@ namespace XSMP.MediaDatabase
                              select artist;
 
             return rawArtists.ToArray().Select(a => PublicModels.Artist.FromDBObject(a)).ToArray();
+        }
+
+        /// <summary>
+        /// Gets a list of artists matching parameters
+        /// </summary>
+        public IReadOnlyList<PublicModels.Artist> FindArtistsByParameters(string song, string album, string artist)
+        {
+            ThrowIfNotReady();
+
+            throw new NotImplementedException();
         }
 
         /// <summary>

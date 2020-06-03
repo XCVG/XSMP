@@ -70,6 +70,7 @@ namespace XSMP.ApiSurface
             return new APIResponse(JsonConvert.SerializeObject(new {
                 version = Config.ProductVersion.ToString(),
                 apiVersion = Config.APIVersion,
+                apiMinorVersion = Config.APIMinorVersion,
                 versionCodename = Config.VersionCodename,
                 description = Program.ProductNameString }));
         }
@@ -328,6 +329,27 @@ namespace XSMP.ApiSurface
                 responseData.Add("folders", MediaDatabase.FindFoldersByName(keyword));
             if (listOptions.Contains("playlists"))
                 responseData.Add("playlists", MediaDatabase.FindPlaylistsByName(keyword));
+
+            return new APIResponse(JsonConvert.SerializeObject(new { data = responseData }));
+        }
+
+        [APIMethod(Mapping = "library/search2", Verb = HttpVerb.GET)]
+        private APIResponse GetSearch2(APIRequest request)
+        {
+            request.Params.TryGetValue("song", out string song);
+            request.Params.TryGetValue("album", out string album);
+            request.Params.TryGetValue("artist", out string artist);
+
+            Dictionary<string, object> responseData = new Dictionary<string, object>();
+            string[] listOptions = APIUtils.SplitCSVList(request.Params["list"]);
+
+            //run searches
+            if (listOptions.Contains("songs"))
+                responseData.Add("songs", MediaDatabase.FindSongsByParameters(song, album, artist));
+            if (listOptions.Contains("albums"))
+                responseData.Add("albums", MediaDatabase.FindAlbumsByParameters(song, album, artist));
+            if (listOptions.Contains("artists"))
+                responseData.Add("artists", MediaDatabase.FindArtistsByParameters(song, album, artist));
 
             return new APIResponse(JsonConvert.SerializeObject(new { data = responseData }));
         }
