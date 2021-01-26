@@ -23,7 +23,7 @@ namespace XSMP
         public static Version ProductVersion => typeof(Program).Assembly.GetName().Version;
         public static string VersionCodename { get; } = "Anette";
         public static int APIVersion { get; } = 1;
-        public static int APIMinorVersion { get; } = 1; //because I'm an idiot
+        public static int APIMinorVersion { get; } = 2; //because I'm an idiot
 
         //media scanner config
         public static int MediaScannerReportInterval = 200; //report progress every 200 songs
