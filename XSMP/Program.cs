@@ -19,10 +19,14 @@ namespace XSMP
             AppDomain.CurrentDomain.ProcessExit += new EventHandler(HandleExternalExit);
             AppDomain.CurrentDomain.UnhandledException += new UnhandledExceptionEventHandler(HandleUnhandledException);
 
-            //TODO handle args/portable mode
+            //portable mode handling
+            CheckPortableMode(args);
 
             SetupFolders();
             LoadUserConfig();
+
+            //port override arg handling
+            CheckPortOverride(args);
 
             MediaDB mediaDatabase = new MediaDB();
             APIController apiController = new APIController(new APISurface(mediaDatabase));
@@ -30,7 +34,7 @@ namespace XSMP
 
             IsRunning = true;
 
-            //args handling
+            //argument commands handling
             if(args.Contains("-rebuild"))
             {                
                 mediaDatabase.StartRebuild();
@@ -56,6 +60,39 @@ namespace XSMP
         public static void SignalExit()
         {
             IsRunning = false;
+        }
+
+        private static void CheckPortableMode(string[] args)
+        {
+            if(File.Exists(Path.Combine(Config.ProgramFolderPath, "portable.mode")))
+            {
+                Config.IsPortable = true;
+                Console.WriteLine("Magic portable.mode file found, will run in portable mode!");
+                return;
+            }
+
+            if(args.Contains("-portable"))
+            {
+                Config.IsPortable = true;
+                Console.WriteLine("-portable option specified, will run in portable mode!");
+                return;
+            }
+        }
+
+        private static void CheckPortOverride(string[] args)
+        {
+            int portIndex = Array.IndexOf(args, "-port");
+            if (portIndex >= 0)
+            {
+                if(args.Length > portIndex + 1 && int.TryParse(args[portIndex + 1], out var port))
+                {
+                    UserConfig.Instance.PortOverride = port;
+                }
+                else
+                {
+                    Console.Error.WriteLine("-port option was specified, but no valid port could be read");
+                }
+            }
         }
 
         private static void SetupFolders()

@@ -24,7 +24,7 @@ namespace XSMP
         private int SavedPort { get; set; } = 1547;
 
         [JsonIgnore]
-        public static int? PortOverride { get; set; }
+        public int? PortOverride { get; set; }
 
         [JsonProperty]
         public bool UseSystemMusicFolder { get; private set; } = true;
