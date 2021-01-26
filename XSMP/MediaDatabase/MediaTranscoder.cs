@@ -60,7 +60,7 @@ namespace XSMP.MediaDatabase
                 {
                     Process p = new Process();
                     p.StartInfo.Arguments = string.Format(commandLine, sourcePath, targetPath);
-                    p.StartInfo.WorkingDirectory = Program.ProgramFolderPath;
+                    p.StartInfo.WorkingDirectory = Config.ProgramFolderPath;
                     p.StartInfo.FileName = "ffmpeg.exe";
                     p.StartInfo.CreateNoWindow = true;
                     p.StartInfo.RedirectStandardError = true;

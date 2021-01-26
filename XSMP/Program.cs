@@ -19,6 +19,8 @@ namespace XSMP
             AppDomain.CurrentDomain.ProcessExit += new EventHandler(HandleExternalExit);
             AppDomain.CurrentDomain.UnhandledException += new UnhandledExceptionEventHandler(HandleUnhandledException);
 
+            //TODO handle args/portable mode
+
             SetupFolders();
             LoadUserConfig();
 
@@ -127,7 +129,6 @@ namespace XSMP
         }
 
         public static string ProductNameString => $"{Config.ProductName} v{Config.ProductVersion} \"{Config.VersionCodename}\" (API v{Config.APIVersion}.{Config.APIMinorVersion})";
-
-        public static string ProgramFolderPath => Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().Location);
+        
     }
 }

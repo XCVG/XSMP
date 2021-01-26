@@ -68,7 +68,7 @@ namespace XSMP.MediaDatabase
             string dbPath = DatabasePath;
             if (!File.Exists(dbPath))
             {
-                string dbInitialPath = Path.Combine(Program.ProgramFolderPath, "mediadb.sqlite");
+                string dbInitialPath = Path.Combine(Config.ProgramFolderPath, "mediadb.sqlite");
                 Directory.CreateDirectory(Path.GetDirectoryName(dbPath));
                 File.Copy(dbInitialPath, dbPath);
                 Console.WriteLine($"[MediaDB] Created new media database at {dbPath}");
@@ -131,7 +131,7 @@ namespace XSMP.MediaDatabase
             int scanRetryCount = 0;
 
             //run media scan
-            while (State != MediaDBState.Ready && scanRetryCount < Config.MediaScannerRetryCount)
+            while (State != MediaDBState.Ready && scanRetryCount < UserConfig.Instance.MediaScannerRetryCount)
             {
                 try
                 {

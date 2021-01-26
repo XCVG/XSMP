@@ -103,7 +103,7 @@ namespace XSMP.MediaDatabase
 
                     scannedFiles++;
                     //reporting
-                    if(scannedFiles % Config.MediaScannerReportInterval == 0)
+                    if(scannedFiles % UserConfig.Instance.MediaScannerReportInterval == 0)
                     {
                         Console.WriteLine($"[MediaScanner] Scanned {scannedFiles} files");
                     }
@@ -115,7 +115,7 @@ namespace XSMP.MediaDatabase
             Console.WriteLine($"[MediaScanner] Scanned {scannedFiles} files");
 
             int totalRows = OldSongs.Count + NewSongs.Count;
-            int maxDBErrors = Math.Max(Config.MediaScannerMaxDBErrorMinCount, (int)(totalRows * Config.MediaScannerMaxDBErrorRatio));
+            int maxDBErrors = Math.Max(UserConfig.Instance.MediaScannerMaxDBErrorMinCount, (int)(totalRows * UserConfig.Instance.MediaScannerMaxDBErrorRatio));
             int dbErrors = 0;
 
             //clear songs that no longer exist
@@ -150,7 +150,7 @@ namespace XSMP.MediaDatabase
 
             //add new songs (adding new albums and artists as necessary)
             int totalSongs = NewSongs.Count;
-            int insertReportInterval = Config.MediaScannerReportInterval; //will be more complex later
+            int insertReportInterval = UserConfig.Instance.MediaScannerReportInterval; //will be more complex later
             int insertedSongs = 0;
 
             Console.WriteLine($"[MediaScanner] Adding {totalSongs} songs to database");

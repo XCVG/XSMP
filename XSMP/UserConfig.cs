@@ -15,9 +15,16 @@ namespace XSMP
         #region Actual Data
 
         [JsonProperty]
-        public static string Hostname { get; private set; } = "localhost";
-        [JsonProperty]
-        public static int Port { get; private set; } = 1547;
+        public string Hostname { get; private set; } = "localhost";
+
+        [JsonIgnore]
+        public int Port => PortOverride ?? SavedPort;
+
+        [JsonProperty(PropertyName = "Port")]
+        private int SavedPort { get; set; } = 1547;
+
+        [JsonIgnore]
+        public static int? PortOverride { get; set; }
 
         [JsonProperty]
         public bool UseSystemMusicFolder { get; private set; } = true;
@@ -33,6 +40,15 @@ namespace XSMP
 
         [JsonProperty]
         public float MaximumCacheSize { get; private set; } = 1024;
+
+        [JsonProperty]
+        public int MediaScannerReportInterval { get; private set; } = 200; //report progress every 200 songs
+        [JsonProperty]
+        public int MediaScannerMaxDBErrorMinCount { get; private set; } = 10; //base number of DB errors considered acceptable
+        [JsonProperty]
+        public float MediaScannerMaxDBErrorRatio { get; private set; } = 0.05f; //number of DB errors considered acceptable as a ratio of total rows
+        [JsonProperty]
+        public int MediaScannerRetryCount { get; private set; } = 2; //retry n times on media scanner failure before dumping the DB and starting a rebuild
 
         #endregion
 
